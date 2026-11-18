@@ -1,0 +1,62 @@
+\section{Forward model and Fourier-domain formulation}
+\label{sec:model}
+
+\subsection{From a point response to a discrete operator}
+
+Let \(f\in\mathbb R^{M\times N}\) denote the sharp intensity image and \(g\) the observation on the same pixel grid. In a linear, shift-invariant system the response to a unit source at position \((p,q)\) is a shifted point spread function (PSF). Expanding the image as a weighted sum of impulses therefore gives a weighted sum of shifted PSFs. This is convolution. For an integer PSF support and periodic extension, the forward map is
+\begin{equation}
+(\Hoperator f)[i,j] = \sum_{a,b} h[a,b]\,
+    f[(i-a)\bmod M,(j-b)\bmod N].
+\label{eq:conv}
+\end{equation}
+Indices \(a,b\) are offsets from the PSF origin. The intensity PSFs in this work are nonnegative and sum to one. This convention keeps constant images fixed and preserves total intensity before adding noise. The two conservation statements follow from the normalization and the use of all periodic shifts. The same PSF under a cropped zero-boundary operator can lose intensity at the edges.
+
+For a stored kernel with shape \(m\times n\), its origin is at \((\lfloor m/2\rfloor,\lfloor n/2\rfloor)\) in zero-based indexing. This definition is explicit for even as well as odd sizes. To construct the image-sized impulse response, place the stored kernel in the upper-left block of a zero array and roll by the negative origin in both dimensions. Padding a centered kernel and shifting the whole image-sized array also works when the center is placed exactly. A one-pixel placement error changes the phase, even if a magnitude spectrum appears unchanged.
+
+For a \(1\times 5\) signal \((0,0,8,0,0)\), the symmetric kernel \(h[-1]=1/4,\ h[0]=1/2,\ h[1]=1/4\) gives \((0,2,4,2,0)\). For a \(5\times5\) image containing a single intensity-9 point, the uniform \(3\times3\) kernel gives a \(3\times3\) block of ones around that point. Moving the point to a corner sends part of the block to the opposite boundaries under periodic extension. These examples motivate the impulse checks in Appendix~\ref{app:oracles}.
+
+\subsection{Boundary conditions and the adjoint}
+
+Periodic extension identifies opposite edges. Zero extension assumes that everything beyond the field of view has value zero. Reflection extends the last visible structures symmetrically. Each assumption changes which pixels contribute to a boundary measurement and hence changes the inverse problem. An FFT on the original grid computes circular convolution. To compute full linear convolution with a finite kernel by FFT, pad to at least \((M+m-1)\times(N+n-1)\), then crop the intended observation and account for the kernel origin. Padding for a forward computation alone does not define the adjoint of the resulting cropped operator.
+
+The adjoint \(\Hoperator^\top\) is defined by
+\(\langle \Hoperator f,u\rangle=\langle f,\Hoperator^\top u\rangle\).
+For circular convolution, changing \(i-a\) and \(j-b\) to summation coordinates in the inner product gives circular convolution with \(h[-a,-b]\). For a real centered symmetric kernel, the forward and adjoint maps coincide. An asymmetric impulse response makes a stronger test because it distinguishes convolution from correlation and exposes a sign error in the shift. With a windowed measurement operator, the adjoint must also reverse the crop by embedding the measurement into the larger grid.
+
+\subsection{PSFs used by the experiments}
+
+For an isotropic Gaussian, the finite samples on \([-8,8]^2\) are proportional to
+\(\exp[-(a^2+b^2)/(2\sigma_h^2)]\). The canonical width is \(\sigma_h=1.9\) pixels. The full width at half maximum of the corresponding continuous profile is \(2\sqrt{2\log 2}\sigma_h\), approximately \(4.47\) pixels. Normalization is applied after sampling and truncation. The horizontal motion PSF places mass \(1/9\) on each displacement \(b=-4,\ldots,4\) at \(a=0\). It represents uniform translation during exposure.
+
+An actual optical PSF can be estimated by imaging fluorescent beads below the system resolution or predicted from an optical model. Numerical aperture, wavelength, refractive index, focus, and physical sampling all affect the kernel. The EPFL PSF Generator includes the Born--Wolf and Gibson--Lanni models \citep{psfgen,sage}. The independent Hollow Bars experiment uses a supplied widefield PSF rather than a Gaussian approximation. The model assumes that the kernel has already been calibrated on the imaging grid. Estimating a spatially varying PSF is outside its scope.
+
+\subsection{Observation noise}
+
+Write \(b=\Hoperator f\). An additive model is \(g=b+n\), often with independent zero-mean Gaussian \(n_i\) and common variance \(\sigma_n^2\). Unweighted squared residuals correspond to the negative Gaussian log-likelihood up to a scale and an additive constant. In our simulation the Gaussian observation is clipped from below at zero so the exact likelihood of the clipped measurement differs near the dark end.
+
+For independent photon counts, \(y_i\mid f\sim\operatorname{Pois}(P b_i)\), where \(P\) denotes the count scale at normalized intensity one. Dividing by \(P\) gives \(g_i=y_i/P\) with
+\begin{equation}
+\mathbb E[g_i\mid f]=b_i,\qquad
+\operatorname{Var}(g_i\mid f)=b_i/P .
+\end{equation}
+The variance changes with the signal. A sample may exceed one in either simulation. The generation stage does not cap the bright end. If a detector adds known background \(r_i\) in count units, the Poisson mean becomes \(P b_i+r_i\). A correct likelihood would include \(r_i\) inside its logarithm. Our controlled Poisson data do not include a background term.
+
+\subsection{The optical transfer function and conditioning}
+
+Use a capital letter for a 2D discrete Fourier transform (DFT). The optical transfer function (OTF) is \(H=\F h\), with the origin at array index \((0,0)\). The convolution theorem gives
+\begin{equation}
+G[u,v]=H[u,v]F[u,v]+\mathcal N[u,v],\qquad H[0,0]=1
+\label{eq:dft}
+\end{equation}
+under the additive model. The adjoint uses \(\overline H\). Padding with a different origin changes phase through the shift theorem, while leaving \(|H|\) unchanged.
+
+Let \(U\) be the unitary DFT on vectorized images. The circular blur matrix is block circulant with circulant blocks and has decomposition
+\(\Hoperator=U^*\operatorname{diag}(H)U\) \citep{hansen}. Its singular values are \(|H[u,v]|\). When all are nonzero, the spectral condition number is \(\max|H|/\min|H|\). Normalized nonnegative PSFs have \(\max|H|=1\) by the triangle inequality and the DC value. Thus the smallest transmitted magnitude controls the worst-case noise amplification. If \(H=0.02\), a spectral perturbation of \(0.01\) becomes an inverse error of \(0.5\).
+
+If \(H=0\) at a bin, any component of \(F\) in that direction leaves the data unchanged. A two-pixel average maps both \((1,0)\) and \((0,1)\) to \((1/2,1/2)\); the alternating component is lost. The Moore--Penrose solution sets null-space coefficients to zero. The box-motion OTF has regularly spaced zeros as a continuous function on the frequency torus. A finite DFT may sample a zero or pass close to it, depending on the grid size. Neither stronger sharpening nor more iterations supplies information at a true null.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{frequency.png}
+\caption{Horizontal OTF slices for the two simulation PSFs, and filter gains on the Gaussian slice. The inverse gain is clipped only for plotting the logarithmic scale.}
+\label{fig:frequency}
+\end{figure}

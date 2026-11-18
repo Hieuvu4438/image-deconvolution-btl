@@ -1,0 +1,31 @@
+\FloatBarrier
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Interpreting improvement}
+
+The two Tikhonov variants reduce the sensitivity that makes NIF unstable. RL gains quality at finite iteration limits, and adding TV provides additional benefit on the main photographed scenes at the selected settings. The Poisson KL diagnostic separates data fit from recovery: after the oracle PSNR peak, the objective in the measurement domain continues to decrease. In a practical deployment the ground truth is rarely available, so an iteration rule tuned on representative validation data is more realistic than maximizing test PSNR.
+
+Different methods can lead on different targets or metrics. The geometric phantom and EPFL projection demonstrate this directly. A regularizer that helps a smooth background can alter edges or narrow lines. Conversely, a method can sharpen the bars enough to reduce squared error while creating weak structured artifacts. The study therefore uses absolute and paired PSNR, local SSIM, intensity profiles, and common-scale images. Additional resolution claims, such as resolving two physical emitters, would need a calibrated spatial experiment and a resolution criterion.
+
+\subsection{Distinguishing algorithm and implementation}
+
+Matching input TIFFs is necessary but insufficient for comparing software. A normalization error on a broad PSF, a different definition of the Laplacian, or one pixel of phase shift changes the reconstructed array. Tolerances are applied only after defining the compared discrete operators. The border impulse, raw pixel errors, and independent score implementations give three complementary checks. ImageJ is a reference implementation, and it need not use the same default choices as the educational code.
+
+RIF and RL illustrate the distinction. The main RIF uses the five-point operator. The matching branch uses the plugin's spectral convention. Plain RL updates with two different initializations and numerical ratio rules because the test evaluates both the project configuration and like-for-like agreement. RLTV uses even more implementation-specific TV details. Presenting all those values under one unlabeled column would conflate numeric verification with a comparison of method choices.
+
+\subsection{Practical failure diagnosis}
+
+Ringing near a contour suggests a frequency gain that is too large or an incorrect boundary model. A global image shift suggests an origin mismatch. Noise amplified over a flat region suggests weak regularization or too many iterations. A strong color LUT or ImageJ auto-contrast can make different float arrays appear similar. In the present workflow the primary diagnostics are the centered PSF, spatial impulse, raw TIFF, and numerical errors. A visual comparison always shares a display range. The paired boundary experiment shows why inspecting the margins is important even when the center improves.
+
+A practical choice among these methods depends on the expected noise, the kernel, and the task. Identity-penalty Tikhonov gives a compact direct baseline. Laplacian regularization preserves DC and penalizes local oscillation. Plain RL is appropriate when photon statistics and nonnegativity matter and a stopping rule is available. RLTV can suppress noise on piecewise-smooth structures, with increased cost and a stronger dependence on the TV convention and weight. No line of Table~\ref{tab:primary} establishes a universal ranking.
+
+\subsection{Limitations and external validity}
+
+The natural-image test is a fixed 10-image subset and uses one noise realization for each image and noise model. Cross-image standard deviations are descriptive. They do not capture variation across repeated draws, calibrated cameras, or the full BSDS500 distribution. The simulated Gaussian noise is clipped below zero and the Poisson generator operates on normalized, gamma-encoded JPEG crops. Neither measurement pipeline fully models a physical sensor.
+
+The principal experiments know the blur PSF and use a shared periodic convention. The mismatch experiments explore selected deviations, including a linear zero-extended image, without estimating the correct model from data. The EPFL experiment is one independently sourced synthetic structure projected to 2D. It does not establish performance on acquired microscopy, mixed detector noise, unknown backgrounds, spatially varying blur, color channels, or full 3D reconstruction. More expansive claims would require additional datasets with independent calibration, multiple noise draws, and separate validation for each platform.
+
+\section{Conclusion}
+
+We developed the non-blind 2D forward model, derived five direct and iterative estimators, implemented them in Python, and verified the shared computation against DeconvolutionLab2 in ImageJ. Stabilized inverse filtering remained sensitive to noise. Tikhonov and finite-step Richardson--Lucy variants improved the principal observations, and RLTV led the Python mean scores at our frozen BSDS500 settings. The EPFL and phantom experiments showed that the best method and metric can change with structure and PSF. The numerical evidence includes identical test inputs, independent scores, raw output comparisons, and an origin-sensitive impulse check. The complete case atlas and scripts permit independent examination of these conclusions.

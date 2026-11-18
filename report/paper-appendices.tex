@@ -1,0 +1,217 @@
+\section{Reproduction and artifact inventory}
+\label{app:reproduce}
+
+\subsection{Environment and data}
+
+The report uses run \texttt{\RunID}. The application environment is Python \PythonVersion, NumPy \NumPyVersion, SciPy \SciPyVersion, ImageJ 1.54p, and Java \JVMVersion. The Python dependency pins are listed in \file{code/requirements.txt}. The Java path must expose both \file{javac} and \file{java}. The original downloads are obtained from Berkeley and EPFL. SHA-256 hashes for the benchmark files and release JARs are recorded in the manifests. The checkout does not need to redistribute archives or third-party JARs.
+
+\textbf{Validation JPEG IDs}\quad\ValidationIDs.
+
+\textbf{Test JPEG IDs}\quad\TestIDs.
+
+The manifests preserve the full archive member names, including any zero padding used in original filenames. The archived numerical summary does not depend on machine-specific absolute paths. The saved job list and runtime log refer to the paths used by the recorded execution, while a new batch constructs jobs relative to the current project root.
+
+\subsection{Commands}
+
+Run Listing~\ref{lst:commands} from the project root. Each fresh BSDS500 experiment creates a time-stamped output directory. Subsequent commands obtain the latest output path or accept a specific run directory. The ImageJ runtime and supplementary experiments each create their own directories. For a new full result, use a fresh primary run so all audits share the same frozen configuration.
+
+\begin{lstlisting}[style=paper,caption={End-to-end experiment and report-data generation from the BTL root.},
+label={lst:commands}]
+python code/scripts/prepare_data.py
+python code/scripts/check.py
+python code/scripts/run_experiments.py
+python code/scripts/audit_artifacts.py
+python code/scripts/run_imagej.py
+python code/scripts/run_sensitivity.py
+python code/scripts/run_epfl_bars.py
+python code/scripts/build_report.py
+\end{lstlisting}
+
+From \file{report}, run pdfLaTeX on \file{bao-cao.tex} twice or use \file{latexmk}. The LaTeX source archive includes figures, input tables, and the adapted course paper style. Its typography follows the public ICLR 2026 author example \url{https://github.com/ICLR/Master-Template/tree/master/iclr2026}.
+
+\subsection{Expected artifacts and audit counts}
+
+\begin{table}[!htbp]
+\centering
+\caption{Checklist of numerical evidence. The paths are relative to a completed run directory.}
+\small
+\begin{tabularx}{\linewidth}{@{}p{.44\linewidth}Y@{}}
+\toprule Artifact & Expected content\\\midrule
+\file{config_frozen_before_test.json} & Selected values and candidate grids recorded before any test reconstruction.\\
+\file{validation_sweep.csv} & One row per method setting, validation image, and noise model.\\
+\file{validation_rl_fit.csv} & 25 records of RL PSNR and observation-domain KL.\\
+\file{test_metrics.csv} & 240 rows for 10 photographs, two noise models, six methods including the observation, and two scoring policies.\\
+\file{artifact_audit.json} & Python TIFF coverage and metric recomputation.\\
+\file{imagej/imagej_metrics.csv} & 242 rows including both scores for the asymmetric impulse output.\\
+\file{imagej/parity.csv} & Raw pixel comparisons for 100 restorations.\\
+\file{sensitivity/metrics.csv} & 720 rows across six scenarios, ten photos, six methods, and two regions.\\
+\file{sensitivity/phantom_metrics.csv} & 12 rows from two known PSFs and six method outputs each.\\
+\file{epfl-bars/manifest.json} & Archive hashes, geometry, seeds, mass fraction, and 3D-to-2D error.\\
+\file{epfl-bars/imagej/audit.json} & 26 plugin metric rows, including the two impulse scores.\\
+\file{benchmark.csv} & Five timing ratios, raw repetitions, and maximum numeric differences.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The individual output folders retain the reference, observed image, noise-free blur, PSF, and raw estimates as float TIFF. Publication figures use common ranges and fixed ROIs. Observation and output provenance are held together by image and noise identifier. The report data-generation script requires both main and external ImageJ audits to pass before collecting scores.
+
+\subsection{Team responsibilities}
+
+\begin{tabularx}{\linewidth}{@{}p{.29\linewidth}Y@{}}
+\toprule Student & Technical focus\\\midrule
+Nguyen Minh Hieu & Forward model, boundary assumptions, Fourier derivation, and worked examples.\\
+Pham Manh Dung & Python solvers, optimization, and unit testing.\\
+Nguyen Thanh Tam & DeconvolutionLab2 inspection, plugin workflow, and Java batch verification.\\
+Vu Dinh Hieu & Data preparation, evaluation protocol, metric aggregation, and sensitivity experiments.\\
+\bottomrule
+\end{tabularx}
+
+\clearpage
+\section{Independent numerical oracles}
+\label{app:oracles}
+
+\subsection{Impulse response and asymmetric adjoint}
+
+Convolution with a unit impulse places a copy of the PSF at the impulse origin. The ImageJ probe uses an impulse at zero-based pixel \((0,31)\) in a \(32\times32\) array and a \(3\times3\) asymmetric kernel:
+\[
+h=\begin{pmatrix}
+0&0.1&0.2\\
+0.3&0.4&0\\
+0&0&0
+\end{pmatrix}.
+\]
+The nonzero output offsets place values \(0.1,0.2,0.3,0.4\) at pixels
+\((31,31),(31,0),(0,30),(0,31)\), respectively. A correlation reverses their spatial orientation. A zero extension drops mass outside the image. A center error shifts the entire pattern. Comparing the full float array therefore tests all three failure modes at once. The independent Python solver tests also use spatial convolution without FFT when calculating a known asymmetric forward or adjoint result.
+
+\subsection{Spectral and dense least-squares agreement}
+
+For a small image, construct the columns of \(\Hoperator\) by applying spatial convolution to each unit basis vector in turn. Construct \(L\) the same way using the Laplacian stencil. A dense solve of
+\((\Hoperator^\top\Hoperator+\lambda L^\top L)x=\Hoperator^\top g\)
+then checks the spectral division and multiplication by \(\overline H\) without using the implementation's OTF. The test also uses \(L=I\) for TRIF. This comparison distinguishes a correct periodic estimator from a plausible-looking but shifted restoration. A one-row identity-blur case verifies when the vertical neighbor terms cancel.
+
+\subsection{Hand verification of one likelihood update}
+
+For the two-pixel circular operator with diagonal \(3/4\), take \(g=(6,2)\) and \(f^{(0)}=(4,4)\). Both prediction values are 4. The back-projected ratio is therefore \((1.25,0.75)\), which gives \(f^{(1)}=(5,3)\). The next prediction is \((4.5,3.5)\). Its ratio is \((4/3,4/7)\). The two back-projected components are \(8/7\) and \(16/21\), yielding the second iterate \((40/7,16/7)\). Both iterates sum to the observed total 8. This also validates the use of the adjoint in the update rather than a direct additive correction.
+
+\subsection{Directional verification of total variation}
+
+Write \(E(f)=\operatorname{TV}_\delta(f)\). For a deterministic nonconstant test image and perturbation \(w\), compare
+\[
+\frac{E(f+\eta w)-E(f-\eta w)}{2\eta}
+\quad\text{and}\quad
+\left\langle-\operatorname{div}
+\left(\frac{D_+ f}{\sqrt{\norm{D_+ f}^2+\delta^2}}\right),w\right\rangle .
+\]
+This verifies the sign of the discrete divergence and the normalization on the same grid. Further checks compare RL and RLTV at \(\lambda=0\), preserve a constant image to numerical tolerance, and ensure the all-zero input stays zero. The positivity condition is checked in addition to the empirical tests.
+
+\subsection{Metric and I/O checks}
+
+An \(11\times11\) example has exactly one valid SSIM center. Its weighted mean, variance, and cross covariance are calculated explicitly from the window and compared to the filtered-moment implementation. Identity must give SSIM 1 and infinite PSNR. An error of 0.1 at every pixel gives MSE 0.01 and 20 dB with peak 1. Float TIFF round-trip tests include values outside \([0,1]\) to ensure that export does not convert a raw estimate into an 8-bit display. The application-level audit then checks every expected experiment row rather than just the number of rows.
+
+\clearpage
+\section{ImageJ runbook and comparison settings}
+\label{app:imagej}
+
+\subsection{Manual case}
+
+The case \file{100007_poisson} is a useful replay. Open its \file{observed.tif} and the comparison folder's \file{psf_centered.tif}. The first is a 32-bit single-slice image. The second is an image-sized PSF with origin \((128,128)\); it is not the small Python PSF displayed with contrast stretching. Select TRIF and enter \(\lambda=0.02\). Set lateral and axial padding and apodization to none. Select Academic FFT, unit PSF normalization, and no intensity constraint. Export an intact float stack. Select the original case's \file{reference.tif} for scoring, preserving image alignment and float units.
+
+\begin{lstlisting}[style=paper,caption={Option string for the main TRIF example. Paths stand for the shared float TIFFs.},
+label={lst:ijargs}]
+-image file OBSERVED.tif -psf file PSF_CENTERED.tif
+-algorithm TRIF 0.02 -epsilon 0.000001
+-pad NO NO 0 0 -apo NO NO -norm 1 -fft Academic
+-monitor console -stats false -constraint no
+-multithreading no -path RESULT_DIRECTORY
+-out stack TRIF intact float noshow
+\end{lstlisting}
+
+The Java launcher passes the same options as one string to the plugin's entry point after setting the active macro options. \file{-stats false} and \file{noshow} avoid GUI-dependent presentation during batch operation. The console log records the full command and the start and end of each solver. An exception or incomplete output is treated as a failed run rather than a successful image.
+
+\subsection{Auditing agreement}
+
+\begin{tabularx}{\linewidth}{@{}lYY@{}}
+\toprule Check & Shared input or setting & Interpretation\\\midrule
+TIFF decoding & Exact reference and result arrays & Agreement isolates the metric routine.\\
+Impulse & Border position and asymmetric kernel & Measures origin, orientation, and wrap.\\
+NIF & Same floor in both FFT implementations & Agreement tests inverse gain and phase.\\
+TRIF & Shared weight and symmetric center & Agreement tests the identity-penalty solution.\\
+RIF & Matching auxiliary spectral Laplacian & Separates discrete operators from the solver.\\
+RL & Matching initialization and ratio rule & Separates iteration conventions from FFT.\\
+RLTV & Same nominal parameters only & Scores measure two distinct TV variants.\\
+\bottomrule
+\end{tabularx}
+
+In the EPFL experiment the common PSF is already normalized in Python, so the option changes from \file{-norm 1} to \file{-norm no}. The run retains the full PSF support instead of forcing it to fit the much smaller Gaussian kernel. The protocol only generalizes agreement to the recorded 2D kernels and algorithm variants.
+
+\clearpage
+\section{Complete validation sweep}
+\label{app:validation}
+
+The validation performance below averages the same five images in each noise model. NIF is fixed and has a single entry. Frozen choices are marked with an asterisk, including the sole NIF configuration. RLTV varies \(K\) and \(\lambda\) jointly while holding \(\delta=0.01\). PSNR ties displayed after rounding are resolved using the underlying unrounded means.
+
+\begin{center}
+\small
+\captionof{table}{Complete set of Gaussian-noise hyperparameter candidates.}
+\begin{tabular}{llr}
+\toprule Method & Candidate & Validation PSNR (dB)\\\midrule
+\input{tables/sweep-gaussian}
+\end{tabular}
+\end{center}
+
+\clearpage
+\begin{center}
+\small
+\captionof{table}{Complete set of Poisson-noise hyperparameter candidates.}
+\begin{tabular}{llr}
+\toprule Method & Candidate & Validation PSNR (dB)\\\midrule
+\input{tables/sweep-poisson}
+\end{tabular}
+\end{center}
+
+\begin{center}
+\small
+\captionof{table}{Plain RL data fitting and reference recovery on the five Poisson validation cases.}
+\begin{tabular}{rrr}
+\toprule Iterations & Mean PSNR (dB) & Mean KL per pixel\\\midrule
+\input{tables/rl-fit}
+\end{tabular}
+\end{center}
+
+\clearpage
+\section{Additional quantitative results}
+\label{app:additional}
+
+\subsection{Complete phantom scores}
+
+The geometric experiments share the same reference and noise realization but use different forward PSFs. The figures in the body show selected estimators so the mark patterns remain legible. The table includes the observation and all five estimators. A strongly improved mean squared error need not produce the highest structural similarity when a reconstruction changes contrast in narrow repeated bars.
+
+\begin{center}
+\small
+\captionof{table}{Geometric phantom quality with matched PSFs. Metrics use clipped intensities.}
+\begin{tabular}{llrr}
+\toprule PSF & Method & PSNR (dB) & SSIM\\\midrule
+\input{tables/phantom}
+\end{tabular}
+\end{center}
+
+\subsection{Sensitivity across estimators}
+
+The following full-frame gains are relative to each scenario's own observation. A negative value indicates that recovery is less accurate by MSE than leaving the observed image as is. All rows reuse the same Gaussian-noise configuration rather than selecting favorable parameters on the test images.
+
+\begin{center}
+\small\setlength{\tabcolsep}{4pt}
+\captionof{table}{Mean full-image PSNR gain (dB) for all methods and sensitivity scenarios.}
+\begin{tabular}{lrrrrr}
+\toprule Scenario & NIF & TRIF & RIF & RL & RLTV\\\midrule
+\input{tables/sensitivity-all}
+\end{tabular}
+\end{center}
+
+\clearpage
+\section{Per-image test atlas}
+\label{app:atlas}
+
+Each page covers one of the ten test photographs under both noise models. The first two rows show full frames and the last two show fixed central \(64\times64\) crops. All panels use the \([0,1]\) display range. The tables score all five methods on the full frames. Gains are paired with the corresponding observation. The CSV snapshot retains MSE, PSNR and SSIM for both raw and clipped estimates.
+
+\input{tables/atlas}

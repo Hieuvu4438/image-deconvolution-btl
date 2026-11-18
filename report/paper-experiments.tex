@@ -1,0 +1,79 @@
+\section{Experimental protocol}
+\label{sec:protocol}
+
+\subsection{Natural images and ground truth}
+
+BSDS500 contains natural photographs and human annotations for contour detection and segmentation \citep{bsds,bsdsdata}. We use the photographs as reference intensity images for a different task. The human labels play no role. We select the first five validation and first ten test JPEGs in lexical filename order, before fitting any parameters. A manifest records the archive checksum, original members, IDs, split, extracted locations, and SHA-256 for each JPEG. Appendix~\ref{app:reproduce} lists the exact identifiers.
+
+Each image is decoded with Pillow, converted to 8-bit grayscale mode \file{L}, center-cropped to \(256\times256\), divided by 255, and represented as float32 for the shared TIFF handoff. These are encoded natural photographs rather than calibrated linear-light luminance. The known reference for the experiment is the resulting grayscale crop. This avoids comparing estimates to an image that has separately undergone interpolation or different grayscale conversion.
+
+\subsection{Paired degradation and frozen settings}
+
+The main blur uses the circular Gaussian PSF with support \(17\times17\), \(\sigma_h=1.9\) pixels, and total mass one. For each reference, create two observations from the same blurred image \(b\):
+\begin{align}
+g_i^{\mathrm G} &= \max(0,b_i+\eta_i),
+\quad \eta_i\sim\mathcal N(0,(3/255)^2),\\
+g_i^{\mathrm P} &= y_i/700,\quad y_i\sim\operatorname{Pois}(700b_i).
+\end{align}
+The Gaussian seed is \(20261118+\mathrm{ID}\). The Poisson seed adds \(10^6\). The random number generator is NumPy's default generator in the recorded environment. The observations are rounded to float32 once, then the exact values are passed to both platforms. The PSF file is also float32 and is interpreted as a normalized kernel. We save the noise-free blur as a diagnostic and use the noisy observation as the baseline when scoring improvement.
+
+We select each method's settings separately for each noise model. The objective is mean clipped PSNR on five validation photographs. TRIF tries \(10^{-4},10^{-3},10^{-2},0.02\). RIF tries \(10^{-4},10^{-3},0.005,0.02\). RL tries 5, 10, 20, 40, and 80 iterations. RLTV evaluates all pairs of \(K\in\{10,20,40\}\) and \(\lambda\in\{10^{-4},0.001,0.003,0.01\}\), with \(\delta=0.01\). NIF uses its fixed floor. We store the selected configuration before producing test reconstructions.
+
+\begin{table}[!htbp]
+\centering
+\caption{Parameters selected on the validation split and frozen for the main test.}
+\label{tab:settings}
+\begin{tabular}{lcc}
+\toprule Method & Gaussian noise & Poisson noise\\\midrule
+\input{tables/settings}
+\end{tabular}
+\end{table}
+
+ImageJ receives the same nominal parameter values as Python. This supports a controlled transfer test. The named implementations can differ, so the scores are not an estimate of the best achievable score for a separately tuned plugin. A second comparison harmonizes the NIF floor, the RIF frequency response, and the RL update where they differ. It measures raw pixel agreement instead of maximizing a quality score.
+
+\subsection{Quality metrics and data-fit diagnostic}
+
+For \(Q\) aligned pixels and the fixed intensity peak \(L=1\),
+\begin{equation}
+\mathrm{MSE} = Q^{-1}\sum_i(\widehat f_i-f_i)^2,\qquad
+\mathrm{PSNR} = 10\log_{10}(L^2/\mathrm{MSE}) .
+\end{equation}
+PSNR is infinite for identity. Arithmetic averages of individual PSNRs differ from PSNR computed from pooled MSE. We report per-image means, sample standard deviations, and paired differences relative to each observation. Each image has equal weight. For the auxiliary crop, MSE and PSNR use the full cropped region.
+
+The structural similarity index compares local luminance, contrast, and structure \citep{ssim}. In the specified window,
+\begin{equation}
+s(f,\widehat f)=
+\frac{(2\mu_f\mu_{\widehat f}+0.01^2)(2\sigma_{f\widehat f}+0.03^2)}
+{(\mu_f^2+\mu_{\widehat f}^2+0.01^2)(\sigma_f^2+\sigma_{\widehat f}^2+0.03^2)} .
+\end{equation}
+The window is an \(11\times11\) normalized Gaussian with standard deviation 1.5, and the weighted covariance uses the population convention. The score is the mean over centers whose entire window lies in the scored region. Python computes moments through separable filtering, while Java sums the 2D weights explicitly. This gives an independent check of both the data handoff and the formula.
+
+Raw scores use the serialized or in-memory floating-point estimate without clipping, with the same peak 1. Clipped scores use \(\clip(\widehat f)\) and \(\clip(g)\) for the observation baseline. Displays share \([0,1]\) unless a caption says otherwise. The plugin's native raw PSNR uses the reference maximum instead of 1. If that maximum is positive, native PSNR equals the fixed-peak value plus \(20\log_{10}(\max f)\). We retain both.
+
+To distinguish statistical fit from recovery, the Poisson validation sweep also measures the per-pixel generalized KL discrepancy between the observation \(g\) and the prediction \(\widehat b=\Hoperator\widehat f\):
+\begin{equation}
+\frac{\KL(g\Vert\widehat b)}{Q} =
+\frac1Q\sum_i\left[\widehat b_i-g_i+
+ g_i\log\left(\frac{g_i}{\widehat b_i}\right)\right].
+\label{eq:kl}
+\end{equation}
+For \(g_i=0\) the logarithmic term contributes zero. Numerical predictions at or below the positive representable floor are floored for this diagnostic. Up to constants independent of \(f\), this quantity is the normalized negative log-likelihood given in the RL derivation. It uses the raw iterate rather than its displayed version. The observed data and sharp reference remain identical at all iteration limits.
+
+\subsection{PSF mismatch, boundary mismatch, and a geometric phantom}
+
+The sensitivity experiment retains the Gaussian-noise settings from Table~\ref{tab:settings}. It changes the assumed Gaussian width to 1.4 or 2.4 pixels while keeping the 1.9-pixel observation. It also makes a new 9-pixel horizontal motion observation and solves it with either the correct motion PSF or the original Gaussian assumption. Finally, it generates a zero-extended blur and restores it with the circular model. The same noise realization per image is reused across the six scenarios, including the matched Gaussian baseline. Each scenario is scored on the full image and after removing 16 pixels per edge. The inner score helps localize errors without redefining the primary whole-image metric.
+
+The geometric phantom has a known \(256\times256\) intensity array. It includes a flat background, a rectangle, a disk, point sources, two separated bars, and line groups with widths of 2, 4, and 8 pixels. It receives the same Gaussian noise scale with seed 7351 and is blurred separately with Gaussian or motion PSFs. The group did not tune a second set of settings on the phantom. Besides full-reference scores, a fixed horizontal cut through row 180 shows how the reconstructions recover or distort bar contrast.
+
+\subsection{Independent EPFL Hollow Bars transfer experiment}
+
+The public Hollow Bars reference and widefield PSF are \(128\times256\times256\) 16-bit stacks with ordered axes \(z,y,x\) \citep{epflbars}. We read the clean volume and PSF archives, verify their published-source identities by SHA-256, and build a two-dimensional test from the axial sums. Let \(S_z v=\sum_z v[z,\cdot,\cdot]\). For full circular convolution in all dimensions,
+\begin{equation}
+S_z(v *_3 k)=(S_z v)*_2(S_z k).
+\label{eq:projection}
+\end{equation}
+To see this, exchange the sum over output \(z\) with kernel offsets. For any axial offset \(c\), the map \(z\mapsto (z-c)\bmod Z\) permutes all axial indices. A maximum-intensity projection does not share this linear identity. We compare a separate 3D FFT implementation followed by summation against the 2D convolution and obtain a maximum difference of \EpflProjectionError{}.
+
+The axial-sum reference is scaled by its own peak, 262140. The axial-sum PSF is normalized by its total mass, 32381499, and kept on the full \(256\times256\) grid. The central \(17\times17\) block contains \EpflMassPercent\% of that mass. In contrast, the entire Gaussian PSF fits in that block. For fair intensity calibration we regenerate the two noise conditions using the same scales as BSDS500 and seeds 735101 and 735102. We use the supplied clean reference and PSF rather than the separately packaged corrupted stacks.
+
+The projected kernel is normalized in double precision and stored as float32. In this experiment the ImageJ batch retains that PSF mass instead of renormalizing it again in Java. An initial compatibility check found that summing the wide kernel in single precision changed its scale enough to exceed the parity tolerances for the direct filters. With \file{-norm no}, both platforms use the stored normalized samples, apart from float32 roundoff. The main BSDS500 comparison continues to use plugin normalization. All reconstruction parameters are transferred unchanged from BSDS500 validation.

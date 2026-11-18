@@ -1,0 +1,28 @@
+\section{Introduction}
+\label{sec:intro}
+
+The image recorded by an acquisition system is an indirect measurement of a scene. Optical blur, motion, defocus, and sampling can spread the intensity of a point across nearby pixels. Noise perturbs the resulting measurements. Even with a known blur kernel, restoring attenuated spatial frequencies can also amplify noise. A method that sharpens a contour can therefore create ringing, increase error on a smooth background, or yield intensities outside the intended range.
+
+This project studies non-blind deconvolution of single-channel images. It develops the image formation model and implements five estimators in Python. DeconvolutionLab2 provides an independently implemented reference in ImageJ. For numerical comparison, the PSF origin, boundary operator, FFT precision, normalization, initialization, and clipping matter. Measuring quality independently on the same saved pixels helps distinguish a difference in reconstruction from a difference in scoring.
+
+\subsection{Related work}
+
+\citet{tikhonov} established regularization for ill-posed problems. \citet{hansen} show how boundary conditions determine the structure of the blur matrix and how this structure enables spectral filtering. \citet{fessler} discusses the trade-off between data fidelity and image priors in regularized reconstruction. We use identity and Laplacian penalties to illustrate the role of the regularization operator.
+
+\citet{richardson} and \citet{lucy} developed multiplicative iterative methods for recovering nonnegative distributions. The Poisson formulation also follows from an expectation--maximization (EM) allocation of unobserved counts, as in the linear model of \citet{shepp}. \citet{dey} combined Richardson--Lucy with total variation to control noise in confocal deconvolution. Likelihood in the measurement domain and reconstruction accuracy in the image domain can favor different iteration counts.
+
+\citet{sage} present DeconvolutionLab2 and evaluate its algorithms on synthetic and acquired microscopy data. Their work motivates measuring numerical quality, visible artifacts, and computational cost. We use BSDS500 \citep{bsds} for natural image structure and the public EPFL Hollow Bars volume \citep{epflbars} for an independent structured object and a theoretical microscope PSF.
+
+\subsection{Research questions}
+
+\begin{enumerate}
+\item \textbf{Reconstruction quality.} Under known blur, how do direct and iterative estimators change full-reference error and image structure? How does performance depend on the regularization parameter or iteration limit?
+\item \textbf{Numerical agreement.} When Python and DeconvolutionLab2 solve the same discrete problem, how close are their raw outputs? Which named counterparts retain different discrete rules?
+\item \textbf{Robustness.} What happens when PSF width, blur type, or the boundary extension is wrong, or when parameters selected on natural photographs are transferred to a much broader optical blur?
+\end{enumerate}
+
+\subsection{Scope and contributions}
+
+This project contributes a reproducible implementation and a controlled evaluation of established algorithms. It separates calibration and test images, uses a shared float32 handoff, computes quality independently in Java and Python, and reports raw and clipped scores. Complementary experiments on a geometric phantom and an axial-sum projection from EPFL probe structures that a global statistic can obscure.
+
+All reconstructions are two-dimensional and assume a specified, spatially invariant blur. The EPFL volume is synthetic, and its projection supplies a controlled 2D benchmark. Appendix~\ref{app:reproduce} gives the reproduction procedure and Appendix~\ref{app:atlas} documents every main test image under both noise models.

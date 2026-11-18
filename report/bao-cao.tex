@@ -1,0 +1,41 @@
+\documentclass[10pt,a4paper,onecolumn]{article}
+\usepackage{course-paper}
+\input{paper-metadata}
+\input{tables/run}
+\hypersetup{pdftitle={\papertitle},pdfauthor={\paperauthors}}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\input{paper-cover}
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+
+\begin{flushleft}
+{\LARGE\scshape \papertitle\par}
+\vspace{.68em}
+{\normalsize\bfseries \paperauthors\par}
+\vspace{.25em}
+{\small \institution\par
+Digital Image Processing \enspace\textbar\enspace Class \classcode\par}
+\end{flushleft}
+
+\pdfbookmark[1]{Abstract}{abstract}
+\begin{center}\large\scshape Abstract\end{center}
+\begin{quote}
+Non-blind image deconvolution recovers an image from blurred, noisy measurements when the point spread function (PSF) is specified. We derive stabilized inverse filtering, two Tikhonov estimators, Richardson--Lucy (RL), and its total-variation variant (RLTV) from a common forward model. A Python implementation is tested against independent numerical oracles and DeconvolutionLab2 2.1.2 in ImageJ. The main experiment uses five BSDS500 validation images to select parameters and ten disjoint test images under Gaussian and Poisson noise. On matched Gaussian blur, Python RLTV achieves mean PSNRs of \(25.44\) and \(24.89\) dB, gains of \(1.76\) and \(1.92\) dB over the observations. After harmonizing conventions, four solvers agree with the plugin within \(2.3\times10^{-5}\) intensity units on these cases. Sensitivity experiments vary PSF width, blur type, and boundaries. An independent EPFL Hollow Bars projection tests a much wider optical PSF and the transfer of parameters selected on natural images. Raw TIFFs, independent MSE/PSNR/SSIM measurements, and per-image results accompany the study.
+\end{quote}
+\textbf{Keywords}\quad image restoration, point spread function, Fourier transform, Tikhonov regularization, Richardson--Lucy, ImageJ
+
+\input{paper-introduction}
+\input{paper-model}
+\input{paper-algorithms}
+\input{paper-implementation}
+\input{paper-experiments}
+\input{paper-results}
+\input{paper-discussion}
+\FloatBarrier
+\input{paper-references}
+\clearpage
+\appendix
+\input{paper-appendices}
+\end{document}

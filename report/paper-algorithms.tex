@@ -1,0 +1,127 @@
+\section{Restoration algorithms}
+\label{sec:algorithms}
+
+\subsection{Stabilized inverse filtering}
+
+At nonzero \(H\), the algebraic inverse is \(\widehat F=G/H=F+\mathcal N/H\). We use a stabilized variant called NIF, matching the usage in this study and the plugin:
+\begin{equation}
+\widehat F_{\mathrm{NIF}} =
+\frac{\overline H\,G}{\max(|H|^2,\tau)},\qquad \tau=10^{-4}.
+\label{eq:nif}
+\end{equation}
+For \(|H|\ge\sqrt{\tau}\), the response is the exact inverse. Below that threshold its gain is \(|H|/\tau\), which tends to zero as \(|H|\) approaches zero. The resulting maximum gain is \(1/\sqrt{\tau}=100\). Dropping frequency bins entirely would be a different stabilization rule. This NIF is a deliberate baseline for measuring how far finite inverse gain alone protects against noise. It can yield negative or saturated intensities because it does not use spatial constraints.
+
+\subsection{Tikhonov estimators}
+
+The Tikhonov family balances a data mismatch and a quadratic penalty:
+\begin{equation}
+\widehat f_\lambda=
+\arg\min_f\left(
+\tfrac12\norm{\Hoperator f-g}_2^2+\tfrac{\lambda}{2}\norm{Lf}_2^2
+\right),\quad \lambda>0 .
+\label{eq:tik-objective}
+\end{equation}
+The gradient is
+\(\Hoperator^\top(\Hoperator f-g)+\lambda L^\top Lf\).
+Setting it to zero yields the normal equation
+\begin{equation}
+(\Hoperator^\top\Hoperator+\lambda L^\top L)\widehat f_\lambda
+=\Hoperator^\top g .
+\end{equation}
+The coefficient matrix is positive definite exactly when
+\(\ker\Hoperator\cap\ker L=\{0\}\), since its quadratic form is a sum of two squared norms. If \(L\) is periodic and has DFT response \(D\), both terms diagonalize, giving
+\begin{equation}
+\widehat F_\lambda=\frac{\overline H G}{|H|^2+\lambda |D|^2}.
+\label{eq:tikhonov}
+\end{equation}
+Equivalently, under a Gaussian measurement model this is a quadratic-prior estimate with the noise and prior scales absorbed into \(\lambda\). A penalty operator with a null space leaves those directions unpenalized; uniqueness still holds if the data identify them.
+
+\subsubsection{Identity penalty (TRIF)}
+
+With \(L=I\), every frequency has penalty \(\lambda\). Its DC response is \(1/(1+\lambda)\), so the method reduces the mean even if the blur preserves it. For \(H=0.1\), \(G=0.45\), and \(\lambda=0.01\), the inverse gives \(4.5\), while TRIF gives \(0.045/0.02=2.25\). The correction of an unstable bin is thus paid for in bias. The response to noise is \(x/(x^2+\lambda)\) for \(x=|H|\), bounded by \(1/(2\sqrt{\lambda})\) by the arithmetic--geometric mean inequality. The bound at \(\lambda=0.01\) is 5, compared with 100 for the NIF setting.
+
+\subsubsection{Laplacian penalty (RIF)}
+
+Use the five-point stencil with center \(-4\) and four unit neighbors. Its spectral response is
+\begin{equation}
+D[u,v]=-4\left(\sin^2(\pi u/M)+\sin^2(\pi v/N)\right).
+\label{eq:laplacian}
+\end{equation}
+DC has \(D=0\) and remains unchanged because \(H[0,0]=1\). At higher frequencies the penalty usually grows, discouraging oscillatory estimates. DeconvolutionLab2 uses a spectral Laplacian \(\omega_x^2+\omega_y^2\) on the even grids considered here. The two Laplacians agree in leading order near DC, up to sign, but their magnitudes differ at higher frequencies. Using the same numerical \(\lambda\) therefore need not implement the same restoration.
+
+\subsection{Bias, variance, mismatch, and parameter choice}
+
+For a correct forward model, define \(W_\lambda=\overline H/(|H|^2+\lambda |D|^2)\) and \(A_\lambda=W_\lambda H\). Then
+\begin{equation}
+\widehat F_\lambda-F=(A_\lambda-1)F+W_\lambda\mathcal N .
+\label{eq:bias}
+\end{equation}
+With zero-mean uncorrelated additive noise and given \(F\), expected squared error in one bin is
+\(|A_\lambda-1|^2|F|^2+|W_\lambda|^2 S_n\), where \(S_n\) is noise power. Increasing \(\lambda\) weakens gains and can remove real detail. Under stationary signal and noise models the Wiener response has the same algebraic form when \(\lambda |D|^2=S_n/S_f\) for positive signal power \(S_f\) \citep{hansen,sage}. Here the penalty is chosen by its structure and the scalar parameter by validation.
+
+If the filter \(W\) was designed using \(\widetilde H\) but the true system is \(H\), the residual error includes \(W(H-\widetilde H)F\). Consequently PSF errors can produce ringing or shape distortion even with zero measurement noise. In applications with no reference image, a discrepancy principle can set the data residual to match the expected measurement noise scale when that scale and the forward operator are credible \citep{fessler}. Our protocol uses held-out reference images to select a practical common configuration. It does not fit to the test set.
+
+\subsection{Richardson--Lucy from a Poisson likelihood}
+
+The negative Poisson log-likelihood divided by \(P\), ignoring terms independent of the estimate, is
+\begin{equation}
+\Phi(f)=\sum_i\left[(\Hoperator f)_i-g_i\log((\Hoperator f)_i)\right],
+\quad f\ge0.
+\end{equation}
+The gradient where the predicted intensities are positive is
+\(\Hoperator^\top(\mathbf 1-g/(\Hoperator f))\). To derive the multiplicative update, let \(A_{ij}\) represent the PSF contribution from true pixel \(j\) to measured pixel \(i\). The latent count \(z_{ij}\) has mean \(P A_{ij}f_j\), and \(y_i=\sum_j z_{ij}\) is observed. Conditional allocation of independent Poisson variables and the EM maximization step give
+\begin{align}
+\mathbb E[z_{ij}\mid y_i,f^{(k)}] &=
+y_i\frac{A_{ij}f^{(k)}_j}{(\Hoperator f^{(k)})_i},\\
+f^{(k+1)}_j &=
+\frac{\sum_i\mathbb E[z_{ij}\mid y_i,f^{(k)}]}
+{P\sum_i A_{ij}} .
+\end{align}
+Using \(g_i=y_i/P\) yields \citep{richardson,lucy,shepp}
+\begin{equation}
+f^{(k+1)}= f^{(k)}\odot
+\frac{\Hoperator^\top(g/(\Hoperator f^{(k)}))}{\Hoperator^\top\mathbf 1}.
+\label{eq:rl}
+\end{equation}
+The division and product are pointwise. The denominator is one for a circular unit-sum PSF. With valid positive predictions at nonzero measurements, exact arithmetic gives
+\(\sum_j f_j^{(k+1)}=\sum_i g_i\)
+after collecting terms by observation pixel. Plain RL preserves nonnegativity for nonnegative inputs. A zero in the initialization remains zero under the multiplicative rule, which matters for images initialized from a clipped observation.
+
+For the two-pixel blur with diagonal \(3/4\) and off-diagonal \(1/4\), let \(g=(6,2)^\top\), \(f^{(0)}=(4,4)^\top\). The first prediction is \((4,4)^\top\) and the ratio is \((3/2,1/2)^\top\). Applying the adjoint and multiplication gives \(f^{(1)}=(5,3)^\top\). A second step gives \((40/7,16/7)^\top\). The exact inverse of \(g\) is \((8,0)^\top\), while increasing the first observation by 0.1 and reducing the second by 0.1 gives the inverse \((8.2,-0.2)^\top\). Appendix~\ref{app:oracles} records the independent checks used for such examples.
+
+In the exact EM setting the data likelihood is nondecreasing. This concerns predictions in the observation domain and does not imply an increasing PSNR against the true image. Iterations may progressively reproduce fine features, then fit statistical fluctuations. We therefore treat \(K\) as an implicit regularization parameter. The Python main mode starts from the observed mean and guards its prediction with a nonnegative floor and an additive \(10^{-12}\). The plugin starts from \(g\) and returns zero ratio below its epsilon threshold. The auxiliary Python matching mode reproduces those rules. Such guards are numerical choices and can change exact conservation and likelihood identities.
+
+\subsection{Total-variation regularized Richardson--Lucy}
+
+We consider the penalized objective \(\Phi(f)+\lambda\,\operatorname{TV}_\delta(f)\), following the use of TV in Poisson microscopy \citep{dey,sage}. With the forward periodic gradient \(D_+\),
+\begin{equation}
+\operatorname{TV}_\delta(f)=\sum_i
+\sqrt{\norm{(D_+f)_i}_2^2+\delta^2}.
+\end{equation}
+The two gradient components share one isotropic magnitude. The smoothing constant \(\delta=0.01\) prevents division by zero on flat regions. Define \(\operatorname{div}=-D_+^\top\). Differentiating gives
+\(-\operatorname{div}(D_+f/\sqrt{\norm{D_+f}^2+\delta^2})\),
+where normalization uses the magnitude at each pixel. For the present periodic system, the implemented iteration uses
+\begin{align}
+v^{(k)}_i &= \frac{(D_+ f^{(k)})_i}
+{\sqrt{\norm{(D_+ f^{(k)})_i}_2^2+\delta^2}},\\
+f^{(k+1)} &= f^{(k)}\odot
+\frac{\Hoperator^\top\big(g/(\Hoperator f^{(k)}+\varepsilon)\big)}
+{1-\lambda\operatorname{div}v^{(k)}} .
+\label{eq:rltv}
+\end{align}
+Under this discretization \(|\operatorname{div}v_i|\le4\), so \(\lambda<1/4\) is sufficient for positive denominators. The code verifies positivity and checks for nonfinite iterates. Setting the penalty to zero reduces the scheme to RL under the same numerical guards. TV can preserve step boundaries while suppressing oscillatory background, but excessive weight can erase fine textures and cause piecewise-flat artifacts. The finite-step rule with stabilization is evaluated empirically. We do not assert that every step minimizes the penalized objective.
+
+\begin{table}[!htbp]
+\centering
+\caption{The controls and principal failure modes of the five implemented estimators.}
+\small
+\begin{tabularx}{\linewidth}{@{}lYY@{}}
+\toprule Method & Control & Failure mode to inspect\\\midrule
+NIF & Power floor \(\tau\) & Strong noise amplification in weakly transmitted bands.\\
+TRIF & Identity penalty weight \(\lambda\) & Intensity bias and loss of structure if too large.\\
+RIF & Laplacian and weight \(\lambda\) & Oscillatory edges with weak regularization or a wrong PSF.\\
+RL & Iteration limit and initialization & Slow recovery, zero locking, or increased noise after many iterations.\\
+RLTV & \(K,\lambda,\delta\) and discrete TV & Texture loss or different results under a different TV operator.\\
+\bottomrule
+\end{tabularx}
+\end{table}

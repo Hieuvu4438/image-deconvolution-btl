@@ -1,0 +1,181 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Calibration on held-out images}
+
+Figure~\ref{fig:validation} shows the mean clipped PSNR used to select parameters. For Gaussian noise, raising the RL limit from 40 to 80 iterations adds only about \(0.06\) dB. On Poisson data, the tested mean is highest at \(K=20\) and falls from \(24.35\) to \(23.63\) dB by \(K=80\). The appropriate stopping point depends on the noise and initialization. For Poisson RLTV at \(K=40\), the best mean in the weight grid occurs at \(\lambda=0.003\). Both weaker and stronger weights reduce the validation mean.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{validation.png}
+\caption{Validation mean PSNR versus the method's parameter. The RLTV panels show the weight sweep at the selected iteration count. Appendix~\ref{app:validation} provides every configuration.}
+\label{fig:validation}
+\end{figure}
+
+Figure~\ref{fig:rlfit} compares two objectives on the same Poisson observations. The mean per-pixel generalized KL discrepancy decreases from approximately \(7.46\times10^{-4}\) at \(K=5\) to \(6.29\times10^{-4}\) at \(K=80\), while PSNR peaks earlier. The results show that closer agreement with the noisy observation can coexist with worse recovery of the clean image. The decreasing values are empirical at the sampled iterations. They do not constitute a convergence result for the stabilized implementation.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{rl-fit.png}
+\caption{Poisson validation for plain RL. Left shows clipped PSNR against ground truth. Right shows the generalized KL discrepancy between the observation and the raw iterate blurred by the known PSF. Points average the same five images.}
+\label{fig:rlfit}
+\end{figure}
+
+\subsection{Natural-image reconstruction quality}
+
+\begin{table}[!htbp]
+\centering
+\caption{Mean clipped quality on ten BSDS500 test images for each noise model. Python PSNR includes sample standard deviation across images.}
+\label{tab:primary}
+\small\setlength{\tabcolsep}{4.6pt}
+\begin{tabular}{llrrrr}
+\toprule
+& & \multicolumn{2}{c}{Python} & \multicolumn{2}{c}{DeconvolutionLab2}\\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Noise & Method & PSNR (dB) & SSIM & PSNR (dB) & SSIM\\\midrule
+\input{tables/primary}
+\end{tabular}
+\end{table}
+
+In Table~\ref{tab:primary}, Python RLTV yields the highest mean PSNR and SSIM among the tested settings for both noise types. Its mean gains are \(1.76\) dB for Gaussian noise and \(1.92\) dB for Poisson noise. The differences between RLTV and plain RL are approximately \(0.13\) and \(0.37\) dB respectively. These differences are smaller than the spread of absolute scores across images. Table~\ref{tab:gain} therefore pairs each result with its exact measured input. On this fixed subset, TRIF, RIF, RL, and RLTV all improve PSNR for every image and both noise types. For Python RLTV on Poisson observations, the paired improvements range from \(0.96\) to \(3.25\) dB.
+
+NIF degrades the baseline in all main cases. Its raw Poisson mean is \(5.41\) dB, improving to only \(8.92\) dB after clipping. This gap quantifies how clipping can hide excursions in weakly transmitted bands. Since \([0,1]\) contains the reference range, componentwise clipping cannot increase squared error. It can still change local structural statistics. The paired visualization and atlas keep the same intensity scale and report the scoring policy explicitly.
+
+\begin{table}[!htbp]
+\centering
+\caption{Python raw mean PSNR and paired clipped gains against the observation. SD is the sample standard deviation of the paired gain.}
+\label{tab:gain}
+\small\setlength{\tabcolsep}{4.2pt}
+\begin{tabular}{llrrrr}
+\toprule Noise & Method & Raw (dB) & Gain (dB) & SD (dB) & Improved\\\midrule
+\input{tables/gain}
+\end{tabular}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{paired.png}
+\caption{Paired Python PSNR gain per test image and method. Each small dot represents an image and the diamond is the mean. The vertical line marks zero improvement.}
+\label{fig:paired}
+\end{figure}
+
+\subsection{Verification with DeconvolutionLab2}
+
+On the same plugin output TIFFs, maximum discrepancies between independently computed MSE, PSNR and SSIM are \MetricMSEGap, \MetricPSNRGap{} dB, and \MetricSSIMGap{}. The correction of native PSNR by the image-dependent peak agrees with fixed-peak raw PSNR to \NativePSNRGap{} dB. This confirms the measurement procedure within numerical tolerance. It leaves differences between restoration outputs to be explained by the solvers.
+
+\begin{table}[!htbp]
+\centering
+\caption{Maximum absolute raw pixel difference from the plugin across all 20 main cases. Matched means that the same numerical convention was used.}
+\label{tab:parity}
+\small
+\begin{tabular}{lrrr}
+\toprule Method & Main Python & Matched Python & Tolerance\\\midrule
+\input{tables/parity}
+\end{tabular}
+\end{table}
+
+For NIF, \file{-epsilon 0.0001} sets the plugin floor on \(|H|^2\). For TRIF, both platforms use the selected \(\lambda\) and the OTF is real for the symmetric, centered PSF. For RIF, the main Python implementation uses finite differences while the plugin uses squared angular frequencies. A separate Python matching calculation uses the plugin spectrum and stabilized division. The maximum difference falls from about \(1.55\times10^{-2}\) to below \(10^{-6}\). The matching formula is verified on the even-size symmetric inputs of this study.
+
+For RL, matching both the starting image and the division rule reduces the maximum difference from about \(1.59\times10^{-1}\) to \(6.14\times10^{-6}\). On the Poisson split at \(K=20\), the nominal Python and plugin means are \(24.51\) and \(23.56\) dB respectively. Comparing the raw arrays at matched settings establishes that the observed gap is driven by the rules being changed. RLTV also changes the discrete gradient, boundary treatment, and TV normalization. We compare its quality at the nominal settings and do not treat the outputs as pixel-equivalent.
+
+At transferred settings the plugin RIF achieves the largest mean PSNR on the main cases, with \(25.32\) dB (Gaussian) and \(24.40\) dB (Poisson). The comparison answers how the plugin behaves on the shared experiment. The validation did not optimize its settings independently. Figure~\ref{fig:roi} and Table~\ref{tab:case} illustrate a fixed case, with the complete per-image record in Appendix~\ref{app:atlas}.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{platform-roi.png}
+\caption{The identical central \(64\times64\) ROI for BSDS500 image 100007 with Poisson noise. Both rows share the fixed display range.}
+\label{fig:roi}
+\end{figure}
+
+\begin{table}[!htbp]
+\centering
+\caption{Illustrative full-image scores for image 100007 under Poisson noise. The image panels show a smaller ROI.}
+\label{tab:case}
+\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{3}{c}{Python} & \multicolumn{3}{c}{DeconvolutionLab2}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+& MSE \(\times10^3\) & PSNR & SSIM & MSE \(\times10^3\) & PSNR & SSIM\\\midrule
+\input{tables/case-example}
+\end{tabular}
+\end{table}
+
+\subsection{Sensitivity to PSF shape and boundary mismatch}
+
+\begin{table}[!htbp]
+\centering
+\caption{Mean paired Python RLTV gain (dB) on ten Gaussian-noise test photographs. The same region is used for the observation and the estimate in each column.}
+\label{tab:sens}
+\small
+\begin{tabular}{lrr}
+\toprule Scenario & Full image & Inner region\\\midrule
+\input{tables/sensitivity}
+\end{tabular}
+\end{table}
+
+As shown in Table~\ref{tab:sens}, moving the assumed Gaussian width from 1.9 to 1.4 or 2.4 pixels reduces mean RLTV gain from \(1.76\) to \(1.22\) or \(0.86\) dB. On motion observations, using the correct 9-pixel box gives a \(2.96\) dB gain, whereas assuming the Gaussian PSF incurs a \(2.79\) dB loss. Removing the border leaves a \(2.63\) dB loss for the wrong blur model. That loss persists away from the edge because the forward model is wrong throughout the image.
+
+The zero-boundary case behaves differently. Restoring it with the periodic model loses \(0.74\) dB over the full frame but gains \(1.75\) dB in the cropped interior. This does not justify excluding boundaries from the primary comparison. It demonstrates where the model error is concentrated. Figure~\ref{fig:sensitivity} shows corresponding trends for the other regularized and iterative solvers. The full CSV also retains NIF, whose much lower gains would dominate the plot scale.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{sensitivity.png}
+\caption{Mean paired PSNR change for regularized and iterative methods under the six sensitivity scenarios. Both panels use the frozen Gaussian-noise configuration.}
+\label{fig:sensitivity}
+\end{figure}
+
+\subsection{Geometric phantom and line contrast}
+
+In the Gaussian phantom experiment, Python RIF and RLTV obtain \(21.66\) and \(21.63\) dB. RIF has SSIM \(0.7285\), below the observation's \(0.7611\), while RLTV obtains \(0.8384\). The similar PSNRs hide a structural difference on a target with extensive flat regions. In the motion case, all methods except NIF improve PSNR, yet every method falls below the observation in SSIM. Plain RL, for example, reaches \(23.12\) dB and \(0.4414\) SSIM. The result is one geometric configuration, with parameters transferred from the photographs.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{phantom.png}
+\caption{Geometric reference, blurred observations and selected Python restorations. Top uses Gaussian blur and bottom uses horizontal motion blur. The phantom is identical in both rows.}
+\label{fig:phantom}
+\end{figure}
+
+The profile in Figure~\ref{fig:profile} distinguishes the isolated bright pair from groups of narrow repetitive lines. A broad kernel smooths their contrast differently. Periodic motion blur has notches in its transfer function, so tuning the inverse cannot restore all spatial frequencies equally. The lines, their background, and associated oscillations remain visible when the profile is scored at its raw intensities. Appendix~\ref{app:additional} reports all phantom scores.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=.96\linewidth]{profile.png}
+\caption{Fixed raw-intensity cross-section through the phantom at row 180. The displayed range of the image panels does not clip these curves.}
+\label{fig:profile}
+\end{figure}
+
+\subsection{Transfer to the EPFL optical PSF}
+
+\begin{table}[!htbp]
+\centering
+\caption{Clipped quality on the two EPFL Hollow Bars projection cases. There is one observation per noise model, with settings transferred from BSDS500.}
+\label{tab:epfl}
+\small\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{llrrrr}
+\toprule
+& & \multicolumn{2}{c}{Python} & \multicolumn{2}{c}{DeconvolutionLab2}\\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Noise & Method & PSNR & SSIM & PSNR & SSIM\\\midrule
+\input{tables/epfl}
+\end{tabular}
+\end{table}
+
+The EPFL projection substantially changes the distribution of transmitted frequencies and the pixel intensity histogram. Python RIF achieves \(17.69\) and \(16.70\) dB, improving over the observations by about \(4.50\) and \(3.51\) dB. It has the highest PSNR under both noise types. The highest Python SSIM belongs to RL in the Gaussian case and RLTV in the Poisson case. The different rankings show that the BSDS500 result for RLTV does not transfer uniformly to the optical PSF and sparse bars.
+
+Plugin RIF also has the highest PSNR for both EPFL cases. With mass preserved and the matched rules applied, the maximum raw difference over NIF, TRIF, RIF, and RL is \EpflParityError{}. The arithmetic agreement on a broad kernel confirms the centering and normalization strategy beyond the Gaussian kernel. It does not validate a three-dimensional restoration. Figure~\ref{fig:epfl} visualizes the identical 2D target and selected outputs. The broad PSF and shared display window make the unprocessed observations faint.
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\linewidth]{epfl.png}
+\caption{Axial-sum EPFL Hollow Bars projection and selected Python restorations. Top row uses Gaussian noise and bottom row uses Poisson noise. All images use the same \([0,1]\) display range.}
+\label{fig:epfl}
+\end{figure}
+
+\subsection{Computational performance}
+
+\begin{table}[!htbp]
+\centering
+\caption{Python solver timing on validation image 101085 with Poisson noise. Values are medians of seven alternating measurements after warm-up.}
+\label{tab:performance}
+\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule & \multicolumn{2}{c}{Time (ms)} && \multicolumn{2}{c}{Tracked MiB} &\\
+Method & Full FFT & Real FFT & Ratio & Full FFT & Real FFT & Max diff.\\\midrule
+\input{tables/benchmark}
+\end{tabular}
+\end{table}
+
+Run \texttt{\RunID} used Python \PythonVersion, NumPy \NumPyVersion, and SciPy \SciPyVersion{} on Windows. Real FFT and OTF caching yield a measured speed ratio of \BenchmarkSpeedRange{}. The largest numeric difference between the two branches is \BenchmarkMaxError{}. Array sizes and work per iteration explain why iterative methods spend more time than closed-form filters. TV also computes spatial differences and normalization, which are not accelerated by FFT reuse. Since the benchmark changes storage format and caching together, the table does not isolate their individual effects. Tracked allocation is not process RSS. The benchmark is specific to one input, solver configuration, and environment.
