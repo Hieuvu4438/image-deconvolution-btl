@@ -1,0 +1,15 @@
+# Bytecode and local Python tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Official BSDS500 archive, extracted images and download cache.
+# The data can be restored with code/scripts/prepare_data.py.
+data/
+
+# Generated TIFF/PNG/CSV, galleries, logs and run metadata.
+# Recreate them using the commands in README.md; keep local copies for handoff.
+outputs/
