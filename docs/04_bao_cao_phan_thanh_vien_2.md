@@ -1,3 +1,5 @@
+> **Bản nháp của nhóm.** Xem [báo cáo PDF đã thống nhất](../report/bao-cao.pdf) và [biên bản rà soát](05_ra_soat_hoc_thuat.md) để dùng cấu hình, lệnh và số liệu đã kiểm chứng.
+
 # CHƯƠNG 4 (PHẦN THÀNH VIÊN 2): CÀI ĐẶT, TỐI ƯU VÀ KIỂM THỬ CHƯƠNG TRÌNH DECONVOLUTION BẰNG PYTHON
 
 - **Người thực hiện:** Phạm Mạnh Dũng (Thành viên 2)

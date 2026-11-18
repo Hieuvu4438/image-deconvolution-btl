@@ -1,3 +1,5 @@
+> **Bản nháp của nhóm.** Xem [báo cáo PDF đã thống nhất](../report/bao-cao.pdf) và [biên bản rà soát](05_ra_soat_hoc_thuat.md) để dùng cấu hình, lệnh và số liệu đã kiểm chứng.
+
 # Kế hoạch triển khai TV2 — BSDS500
 
 Ngày 18/11/2026 — Phạm Mạnh Dũng. Thực hiện theo gate, thay thế các mốc giờ đã trôi qua và phạm vi DIP3E/benchmark cố định trong file 02.

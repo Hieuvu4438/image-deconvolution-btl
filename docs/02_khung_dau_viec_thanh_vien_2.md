@@ -1,3 +1,5 @@
+> **Bản nháp của nhóm.** Xem [báo cáo PDF đã thống nhất](../report/bao-cao.pdf) và [biên bản rà soát](05_ra_soat_hoc_thuat.md) để dùng cấu hình, lệnh và số liệu đã kiểm chứng.
+
 # KHUNG ĐẦU VIỆC CỤ THỂ — THÀNH VIÊN 2 (CÀI ĐẶT, TỐI ƯU & KIỂM THỬ PYTHON)
 
 - **Vai trò:** Thành viên 2 — Phạm Mạnh Dũng

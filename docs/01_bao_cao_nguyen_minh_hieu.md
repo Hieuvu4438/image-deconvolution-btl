@@ -1,3 +1,5 @@
+> **Bản nháp của nhóm.** Xem [báo cáo PDF đã thống nhất](../report/bao-cao.pdf) và [biên bản rà soát](05_ra_soat_hoc_thuat.md) để dùng cấu hình, lệnh và số liệu đã kiểm chứng.
+
 <!-- Nguồn: Google Docs tab "Nguyễn Minh Hiếu" (https://docs.google.com/document/d/1P8vCpAq9aEMOxSRnPM_wwyD8s9wQpYY6BvE13nd-5WI/edit?usp=sharing) -->
 
 # BÁO CÁO HỌC PHẦN: KHÔI PHỤC ẢNH BẰNG KỸ THUẬT DECONVOLUTION
