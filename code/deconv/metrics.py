@@ -14,5 +14,5 @@ def metrics(reference: Array, estimate: Array) -> dict[str, float]:
     va, vb = np.maximum(smooth(a*a)-ma*ma,0), np.maximum(smooth(b*b)-mb*mb,0)
     cov = smooth(a*b)-ma*mb
     s = ((2*ma*mb+.01**2)*(2*cov+.03**2))/((ma*ma+mb*mb+.01**2)*(va+vb+.03**2))
-    return dict(mse=mse, psnr=float(10*np.log10(1/mse)) if mse else float('inf'),
+    return dict(mse=mse, psnr=float(-10*np.log10(mse)) if mse else float('inf'),
                 ssim=float(s[5:-5,5:-5].mean()))

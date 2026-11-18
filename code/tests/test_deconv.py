@@ -80,6 +80,14 @@ class Properties(unittest.TestCase):
             expected=np.linalg.solve(H.T@H+.02*regularizer,H.T@g.ravel()).reshape(shape)
             np.testing.assert_allclose(solve(g,h,method,lam=.02),expected,atol=1e-11)
 
+    def test_rif_laplacian_for_single_row(self) -> None:
+        g = np.array([[.8, .2, .6, .1, .5]])
+        eye = np.eye(g.size)
+        lap = np.roll(eye, 1, axis=0) + np.roll(eye, -1, axis=0) - 2 * eye
+        expected = np.linalg.solve(eye + .02 * lap.T @ lap, g.ravel())
+        np.testing.assert_allclose(solve(g, np.ones((1, 1)), 'RIF', lam=.02), [expected],
+                                   atol=1e-12)
+
     def test_baseline_equivalence(self) -> None:
         for shape in [(31,29),(32,34)]:
             g=np.random.default_rng(4).random(shape);h=gaussian_psf(7)
@@ -94,6 +102,15 @@ class Properties(unittest.TestCase):
         for _ in range(2):
             f*=convolve2d(g/(convolve2d(f,h,'same',boundary='wrap')+1e-12),h[::-1,::-1],'same',boundary='wrap')
         np.testing.assert_allclose(solve(g,h,'RL',iterations=2),f,atol=1e-12)
+
+    def test_rl_imagej_rule(self) -> None:
+        g = np.array([[0., .02, .4, .8, .01]])
+        h = np.array([[.1, .7, .2]])
+        prediction = convolve2d(g, h, 'same', boundary='wrap')
+        ratio = np.divide(g, prediction, out=np.zeros_like(g), where=prediction >= .15)
+        expected = g * convolve2d(ratio, h[:, ::-1], 'same', boundary='wrap')
+        actual = solve(g, h, 'RL', iterations=1, eps=.15, imagej_rl=True)
+        np.testing.assert_allclose(actual, expected, atol=1e-12)
 
     def test_tv_gradient(self) -> None:
         f=np.random.default_rng(6).random((7,9)); direction=np.random.default_rng(7).normal(size=f.shape)
