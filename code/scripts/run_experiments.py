@@ -14,18 +14,20 @@ import scipy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import PIL
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'code'))
-from deconv.core import read_reference, gaussian_psf, degrade, save_tiff, save_png
+from deconv.core import convolve, read_reference, gaussian_psf, degrade, save_tiff, save_png
 from deconv.solvers import solve
 from deconv.metrics import metrics
 
 METHODS=['NIF','TRIF','RIF','RL','RLTV']
 CANDIDATES={'NIF':[{}], 'TRIF':[{'lam':x} for x in [.0001,.001,.01,.02]],
             'RIF':[{'lam':x} for x in [.0001,.001,.005,.02]],
-            'RL':[{'iterations':x} for x in [5,10,20,40]],
-            'RLTV':[{'iterations':20,'lam':x,'delta':.01} for x in [.0001,.001]]}
+            'RL':[{'iterations':x} for x in [5,10,20,40,80]],
+            'RLTV':[{'iterations':k,'lam':x,'delta':.01}
+                    for k in [10,20,40] for x in [.0001,.001,.003,.01]]}
 
 def write_json(path: Path, data: object) -> None:
     path.write_text(json.dumps(data,indent=2,ensure_ascii=False),encoding='utf-8')
@@ -41,21 +43,25 @@ def main() -> None:
     manifest=json.loads((ROOT/'data/bsds500/manifest.json').read_text(encoding='utf-8'))
     write_json(out/'manifest.json',manifest)
     write_json(out/'environment.json',dict(python=sys.version,numpy=np.__version__,scipy=scipy.__version__,
+                                         pillow=PIL.__version__,matplotlib=matplotlib.__version__,
                                          platform=platform.platform(),processor=platform.processor(),
                                          timestamp=stamp,timezone='Asia/Ho_Chi_Minh'))
-    h=gaussian_psf()
+    h_file = gaussian_psf().astype(np.float32)
+    h = h_file.astype(np.float64)
+    h /= h.sum()
     samples={}
     for item in manifest['images']:
         path=ROOT/item['file']
         if hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']:
             raise ValueError(f'Checksum mismatch: {path}')
-        ref=read_reference(path)
+        ref=read_reference(path).astype(np.float32).astype(np.float64)
         for noise in ['gaussian','poisson']:
             seed=20261118+int(item['id'])+(1000000 if noise=='poisson' else 0)
             blurred,g=degrade(ref,h,noise,seed)
+            g = g.astype(np.float32).astype(np.float64)
             folder=out/item['split']/f"{item['id']}_{noise}"
             folder.mkdir(parents=True)
-            for name,array in [('reference',ref),('blurred',blurred),('observed',g),('psf',h)]:
+            for name,array in [('reference',ref),('blurred',blurred),('observed',g),('psf',h_file)]:
                 save_tiff(folder/f'{name}.tif',array)
                 save_png(folder/f'{name}.png',array if name!='psf' else array/array.max())
             write_json(folder/'input.json',dict(id=item['id'],split=item['split'],seed=seed,noise=noise,
@@ -67,6 +73,7 @@ def main() -> None:
             samples[(item['split'],item['id'],noise)]=(ref,g,folder)
     print('Inputs exported; selecting parameters on validation only.',flush=True)
     sweep=[];selected={}
+    rl_fit = []
     for noise in ['gaussian','poisson']:
         selected[noise]={}
         for method in METHODS:
@@ -79,19 +86,30 @@ def main() -> None:
                     score=metrics(ref,np.clip(result,0,1))
                     scores.append(score['psnr'])
                     sweep.append(dict(id=image_id,noise=noise,method=method,params=json.dumps(params),**score))
+                    if method == 'RL' and noise == 'poisson':
+                        prediction = np.maximum(convolve(result, h), np.finfo(np.float64).tiny)
+                        positive = g > 0
+                        kl_sum = (prediction - g).sum()
+                        kl_sum += np.sum(g[positive] * (np.log(g[positive]) - np.log(prediction[positive])))
+                        rl_fit.append(dict(id=image_id, iterations=params['iterations'],
+                                           psnr=score['psnr'], kl_mean=kl_sum / g.size))
                 choices.append((float(np.mean(scores)),params))
             selected[noise][method]=max(choices,key=lambda x:x[0])[1]
     write_csv(out/'validation_sweep.csv',sweep)
+    write_csv(out/'validation_rl_fit.csv', rl_fit)
     fig,axes=plt.subplots(2,4,figsize=(14,7))
     for row,noise in enumerate(['gaussian','poisson']):
         for col,method in enumerate(['TRIF','RIF','RL','RLTV']):
             values=[]
             for params in CANDIDATES[method]:
+                if method=='RLTV' and params['iterations']!=selected[noise][method]['iterations']:
+                    continue
                 scores=[r['psnr'] for r in sweep if r['noise']==noise and r['method']==method and r['params']==json.dumps(params)]
                 values.append((params.get('lam',params.get('iterations')),float(np.mean(scores))))
             ax=axes[row,col];ax.plot(*zip(*values),marker='o')
             if method!='RL': ax.set_xscale('log')
-            ax.set_title(f'{noise} / {method}');ax.set_xlabel('K' if method=='RL' else 'lambda')
+            suffix = f" (K={selected[noise][method]['iterations']})" if method=='RLTV' else ''
+            ax.set_title(f'{noise} / {method}{suffix}');ax.set_xlabel('K' if method=='RL' else 'lambda')
             ax.set_ylabel('Validation mean PSNR')
     fig.tight_layout();fig.savefig(out/'validation_sweep.png',dpi=150);plt.close(fig)
     config=dict(selected=selected,selection='mean clipped PSNR on five validation images only',
@@ -176,7 +194,7 @@ def main() -> None:
     (out/'gallery.html').write_text('<!doctype html><meta charset="utf-8"><title>BSDS500 TV2</title>'
         '<style>body{max-width:1500px;margin:auto;font-family:Arial}img{width:100%}</style>'
         '<h1>BSDS500 — Python deconvolution</h1><p>10 fixed test images; synthetic degradation. '
-        'Raw TIFF is preserved; PNG display clips to [0,1]. Fiji comparison pending.</p>'
+        'Raw TIFF is preserved; PNG display clips to [0,1].</p>'
         '<img src="validation_sweep.png"><img src="quality_summary.png"><img src="benchmark.png">'+''.join(gallery),encoding='utf-8')
     (ROOT/'outputs/LATEST.txt').write_text(out.name,encoding='utf-8')
     print(f'COMPLETE {out.name}',flush=True)

@@ -12,8 +12,16 @@ from deconv.metrics import metrics
 
 def main() -> None:
     out=ROOT/'outputs'/(ROOT/'outputs/LATEST.txt').read_text().strip()
-    rows=list(csv.DictReader((out/'test_metrics.csv').open(encoding='utf-8')))
-    if len(rows)!=240: raise ValueError(f'Expected 240 metric records, got {len(rows)}')
+    with (out/'test_metrics.csv').open(encoding='utf-8', newline='') as stream:
+        rows=list(csv.DictReader(stream))
+    manifest=json.loads((out/'manifest.json').read_text(encoding='utf-8'))
+    expected={(image['id'], noise, method, policy) for image in manifest['images']
+              if image['split']=='test' for noise in ('gaussian','poisson')
+              for method in ('observed','NIF','TRIF','RIF','RL','RLTV')
+              for policy in ('raw','clip01')}
+    keys={(row['id'],row['noise'],row['method'],row['policy']) for row in rows}
+    if len(rows)!=240 or keys!=expected:
+        raise ValueError('Missing or duplicated test metric records')
     error=0.0
     for row in rows:
         folder=out/'test'/f"{row['id']}_{row['noise']}"
@@ -23,7 +31,11 @@ def main() -> None:
         if not np.isfinite(est).all(): raise ValueError('Nonfinite saved TIFF')
         score=metrics(ref,est if row['policy']=='raw' else np.clip(est,0,1))
         for name,value in score.items():
-            difference=abs(value-float(row[name]));error=max(error,difference)
+            recorded = float(row[name])
+            difference = 0.0 if value == recorded else abs(value-recorded)
+            if not np.isfinite(difference):
+                raise ValueError(f'Invalid metric: {row} / {name}')
+            error=max(error,difference)
             if difference>1e-4: raise ValueError(f'TIFF metric mismatch: {row} / {name}')
         for name in ['comparison.png','roi.png','psf.tif','input.json']:
             if not (folder/name).is_file(): raise FileNotFoundError(folder/name)
