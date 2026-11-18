@@ -2,6 +2,7 @@
 from pathlib import Path
 import hashlib
 import json
+import shutil
 import tarfile
 import subprocess
 
@@ -14,7 +15,10 @@ def main() -> None:
     archive = target / 'BSR_bsds500.tgz'
     if not archive.exists():
         temporary = archive.with_suffix('.part')
-        subprocess.run(['curl.exe', '-L', '--fail', '--retry', '2', '--connect-timeout', '20',
+        curl = shutil.which('curl.exe') or shutil.which('curl')
+        if not curl:
+            raise RuntimeError('curl is required to download the official BSDS500 archive')
+        subprocess.run([curl, '-L', '--fail', '--retry', '2', '--connect-timeout', '20',
                         '--max-time', '600', '-C', '-', '-o', str(temporary), URL], check=True)
         temporary.replace(archive)
     records = []
@@ -38,7 +42,7 @@ def main() -> None:
     manifest = dict(source=URL, archive_sha256=hashlib.sha256(archive.read_bytes()).hexdigest(),
                     selection='first filenames lexicographically before experiments', images=records)
     (target / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
-    print(f'Prepared {len(records)} images in team-project/data/bsds500')
+    print(f'Prepared {len(records)} images in data/bsds500')
 
 if __name__ == '__main__':
     main()

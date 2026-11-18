@@ -37,6 +37,12 @@ def gaussian_psf(size: int = 17, sigma: float = 1.9) -> Array:
     h = np.exp(-(axis[:, None]**2+axis[None, :]**2)/(2*sigma**2))
     return h/h.sum()
 
+def horizontal_motion_psf(length: int = 9) -> Array:
+    """Unit-sum discrete box PSF for horizontal uniform motion."""
+    if length < 1 or length % 2 == 0:
+        raise ValueError('Motion length must be odd and positive')
+    return np.full((1, length), 1 / length)
+
 def kernel_grid(kernel: np.ndarray, shape: tuple[int, int]) -> Array:
     k = image_array(kernel)
     if any(a > b for a, b in zip(k.shape, shape)):
