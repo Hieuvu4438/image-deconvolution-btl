@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "metric_rows": 240,
+  "test_cases": 20,
+  "solver_outputs": 100,
+  "max_saved_float32_metric_difference": 4.350304294575835e-08
+}

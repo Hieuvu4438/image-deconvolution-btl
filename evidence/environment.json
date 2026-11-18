@@ -1,0 +1,11 @@
+{
+  "python": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:37:03) [MSC v.1929 64 bit (AMD64)]",
+  "numpy": "2.5.4",
+  "scipy": "1.16.0",
+  "pillow": "13.0.0",
+  "matplotlib": "3.10.3",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+  "timestamp": "20261118_234602",
+  "timezone": "Asia/Ho_Chi_Minh"
+}

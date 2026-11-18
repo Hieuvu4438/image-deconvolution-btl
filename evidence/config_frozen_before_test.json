@@ -1,0 +1,161 @@
+{
+  "selected": {
+    "gaussian": {
+      "NIF": {},
+      "TRIF": {
+        "lam": 0.01
+      },
+      "RIF": {
+        "lam": 0.005
+      },
+      "RL": {
+        "iterations": 80
+      },
+      "RLTV": {
+        "iterations": 40,
+        "lam": 0.001,
+        "delta": 0.01
+      }
+    },
+    "poisson": {
+      "NIF": {},
+      "TRIF": {
+        "lam": 0.02
+      },
+      "RIF": {
+        "lam": 0.02
+      },
+      "RL": {
+        "iterations": 20
+      },
+      "RLTV": {
+        "iterations": 40,
+        "lam": 0.003,
+        "delta": 0.01
+      }
+    }
+  },
+  "selection": "mean clipped PSNR on five validation images only",
+  "psf_size": 17,
+  "psf_sigma": 1.9,
+  "boundary": "periodic",
+  "dtype": "float64",
+  "nif_floor": 0.0001,
+  "rl_epsilon": 1e-12,
+  "rl_init": "observed mean",
+  "rltv_delta": 0.01,
+  "ssim": "11x11 Gaussian sigma 1.5; population covariance; valid window centers; range=1",
+  "metrics": "raw and clipped [0,1]; reference grayscale JPEG crop; no linear-light claim",
+  "candidates": {
+    "NIF": [
+      {}
+    ],
+    "TRIF": [
+      {
+        "lam": 0.0001
+      },
+      {
+        "lam": 0.001
+      },
+      {
+        "lam": 0.01
+      },
+      {
+        "lam": 0.02
+      }
+    ],
+    "RIF": [
+      {
+        "lam": 0.0001
+      },
+      {
+        "lam": 0.001
+      },
+      {
+        "lam": 0.005
+      },
+      {
+        "lam": 0.02
+      }
+    ],
+    "RL": [
+      {
+        "iterations": 5
+      },
+      {
+        "iterations": 10
+      },
+      {
+        "iterations": 20
+      },
+      {
+        "iterations": 40
+      },
+      {
+        "iterations": 80
+      }
+    ],
+    "RLTV": [
+      {
+        "iterations": 10,
+        "lam": 0.0001,
+        "delta": 0.01
+      },
+      {
+        "iterations": 10,
+        "lam": 0.001,
+        "delta": 0.01
+      },
+      {
+        "iterations": 10,
+        "lam": 0.003,
+        "delta": 0.01
+      },
+      {
+        "iterations": 10,
+        "lam": 0.01,
+        "delta": 0.01
+      },
+      {
+        "iterations": 20,
+        "lam": 0.0001,
+        "delta": 0.01
+      },
+      {
+        "iterations": 20,
+        "lam": 0.001,
+        "delta": 0.01
+      },
+      {
+        "iterations": 20,
+        "lam": 0.003,
+        "delta": 0.01
+      },
+      {
+        "iterations": 20,
+        "lam": 0.01,
+        "delta": 0.01
+      },
+      {
+        "iterations": 40,
+        "lam": 0.0001,
+        "delta": 0.01
+      },
+      {
+        "iterations": 40,
+        "lam": 0.001,
+        "delta": 0.01
+      },
+      {
+        "iterations": 40,
+        "lam": 0.003,
+        "delta": 0.01
+      },
+      {
+        "iterations": 40,
+        "lam": 0.01,
+        "delta": 0.01
+      }
+    ]
+  }
+}

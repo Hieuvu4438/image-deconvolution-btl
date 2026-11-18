@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "cases": 2,
+  "outputs": 10,
+  "metric_rows": 26,
+  "metric_max_absolute_error": {
+    "mse": 2.609024107869118e-14,
+    "psnr": 3.375077994860476e-13,
+    "ssim": 2.7755575615628914e-15,
+    "dl2_psnr_raw": 2.8421709430404007e-13
+  },
+  "convolution_max": 2.8958311304450035e-08,
+  "matched_max_error": {
+    "NIF": 5.125999450683594e-06,
+    "TRIF": 2.086162567138672e-07,
+    "RIF": 6.772844237667996e-07,
+    "RL": 1.5578571945784603e-06
+  },
+  "tolerances": {
+    "NIF": 0.0001,
+    "TRIF": 1e-05,
+    "RIF": 1e-05,
+    "RL": 5e-05
+  },
+  "plugin_psf_normalization": "no"
+}

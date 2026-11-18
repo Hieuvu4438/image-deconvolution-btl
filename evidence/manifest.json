@@ -1,0 +1,112 @@
+{
+  "source": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz",
+  "archive_sha256": "97e49d31764f3912f0c4122707d53062ac9e783ba0f095e447a4d53c1a41af8e",
+  "selection": "first filenames lexicographically before experiments",
+  "images": [
+    {
+      "split": "val",
+      "id": "101085",
+      "member": "BSR/BSDS500/data/images/val/101085.jpg",
+      "file": "data/bsds500/val/101085.jpg",
+      "sha256": "dbefbd4ae3749913ee9fffcdb663bea87ab6634dc8b989422f741243bdbedc8a"
+    },
+    {
+      "split": "val",
+      "id": "101087",
+      "member": "BSR/BSDS500/data/images/val/101087.jpg",
+      "file": "data/bsds500/val/101087.jpg",
+      "sha256": "d755a74144410290cff5e214bb7cbf352a8cb920d45fac3d992b9772ad92a017"
+    },
+    {
+      "split": "val",
+      "id": "102061",
+      "member": "BSR/BSDS500/data/images/val/102061.jpg",
+      "file": "data/bsds500/val/102061.jpg",
+      "sha256": "35ce0a9baaebae00c19f6abccd1d7b3ecd8f1c62003e178610b2179c082f0a8e"
+    },
+    {
+      "split": "val",
+      "id": "103070",
+      "member": "BSR/BSDS500/data/images/val/103070.jpg",
+      "file": "data/bsds500/val/103070.jpg",
+      "sha256": "6d1d9e564b5459e969f65470ff03aa3104af779e93c93ca434ad546477e27261"
+    },
+    {
+      "split": "val",
+      "id": "105025",
+      "member": "BSR/BSDS500/data/images/val/105025.jpg",
+      "file": "data/bsds500/val/105025.jpg",
+      "sha256": "6678e84e923e5c1b085afe43ae2fc3735f7f424e02eaefe50a64405f76b9b51b"
+    },
+    {
+      "split": "test",
+      "id": "100007",
+      "member": "BSR/BSDS500/data/images/test/100007.jpg",
+      "file": "data/bsds500/test/100007.jpg",
+      "sha256": "464449ecba30a5a5c229c0133059c83b034e9000bd1d7752a189a8cf21182bf9"
+    },
+    {
+      "split": "test",
+      "id": "100039",
+      "member": "BSR/BSDS500/data/images/test/100039.jpg",
+      "file": "data/bsds500/test/100039.jpg",
+      "sha256": "418366bbb4f0f4c2200b93e8bda153ab84809fe873a371b32e7cc36c2d091cc3"
+    },
+    {
+      "split": "test",
+      "id": "100099",
+      "member": "BSR/BSDS500/data/images/test/100099.jpg",
+      "file": "data/bsds500/test/100099.jpg",
+      "sha256": "e5a275fcafb0dc986d802037210989f4852bfb09bd19e525c3b7719104f1fc77"
+    },
+    {
+      "split": "test",
+      "id": "10081",
+      "member": "BSR/BSDS500/data/images/test/10081.jpg",
+      "file": "data/bsds500/test/10081.jpg",
+      "sha256": "ce1a8bd8da460cf2606b6b5fd55762f8e13b2576fff508228ac24c80839db389"
+    },
+    {
+      "split": "test",
+      "id": "101027",
+      "member": "BSR/BSDS500/data/images/test/101027.jpg",
+      "file": "data/bsds500/test/101027.jpg",
+      "sha256": "22903efe16abd94cfd821952de276cc36c531070c27bd84de7a3fb958bd64bc9"
+    },
+    {
+      "split": "test",
+      "id": "101084",
+      "member": "BSR/BSDS500/data/images/test/101084.jpg",
+      "file": "data/bsds500/test/101084.jpg",
+      "sha256": "6bfa36b8e03b12a83abcfd59c5ccdc89334ea23761f11242d5903935ad292d0c"
+    },
+    {
+      "split": "test",
+      "id": "102062",
+      "member": "BSR/BSDS500/data/images/test/102062.jpg",
+      "file": "data/bsds500/test/102062.jpg",
+      "sha256": "242ea9821b189197d436da1b252325f5e7850248c5d57da53cec29c37ba0773d"
+    },
+    {
+      "split": "test",
+      "id": "103006",
+      "member": "BSR/BSDS500/data/images/test/103006.jpg",
+      "file": "data/bsds500/test/103006.jpg",
+      "sha256": "67968e9d84cd4c69dea832184ba910d4851c284fcc65a38ed6aee89f2a3a72c1"
+    },
+    {
+      "split": "test",
+      "id": "103029",
+      "member": "BSR/BSDS500/data/images/test/103029.jpg",
+      "file": "data/bsds500/test/103029.jpg",
+      "sha256": "a05f1c0b30f4e18ad31364abacb54ec55300704ff3a4f8b2889f400bc3757da1"
+    },
+    {
+      "split": "test",
+      "id": "103078",
+      "member": "BSR/BSDS500/data/images/test/103078.jpg",
+      "file": "data/bsds500/test/103078.jpg",
+      "sha256": "2b21f416993ca1ef49aafa28e5b7f463713dc1b1d510144c673d8b72e035c1f7"
+    }
+  ]
+}

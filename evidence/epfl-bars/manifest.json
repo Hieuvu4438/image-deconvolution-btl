@@ -1,0 +1,27 @@
+{
+  "source": "https://bigwww.epfl.ch/deconvolution/bars/",
+  "archives": {
+    "Bars-stack.zip": "1fbfa441a217771f98df889cfcb1e6b3867835c09cbde29c23fc6b4ce71cdee8",
+    "PSF-Bars-stack.zip": "63770fe4a64150f4227f98d1c7fa1b0cb637f03c5c24f16d78ce2fb28b47eb47"
+  },
+  "shape_zyx": [
+    128,
+    256,
+    256
+  ],
+  "projection": "sum over z, then fixed scaling",
+  "reference_peak": 262140.0,
+  "psf_sum": 32381499.0,
+  "psf_center": [
+    128,
+    128
+  ],
+  "psf_mass_17": 0.16548360021247938,
+  "projection_max_abs_error": 8.575644105945912e-08,
+  "boundary": "periodic in all three axes for identity test",
+  "seeds": {
+    "gaussian": 735101,
+    "poisson": 735102
+  },
+  "synthetic_observation": "Gaussian sigma 3/255 or photon peak 700, generated for this study"
+}

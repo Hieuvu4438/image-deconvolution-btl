@@ -1,0 +1,47 @@
+{
+  "scenarios": {
+    "matched": "Matched Gaussian",
+    "narrow": "Assume sigma = 1.4",
+    "wide": "Assume sigma = 2.4",
+    "motion": "Matched motion",
+    "motion_as_gaussian": "Motion as Gaussian",
+    "zero": "Zero as periodic boundary"
+  },
+  "lock": {
+    "NIF": {},
+    "TRIF": {
+      "lam": 0.01
+    },
+    "RIF": {
+      "lam": 0.005
+    },
+    "RL": {
+      "iterations": 80
+    },
+    "RLTV": {
+      "iterations": 40,
+      "lam": 0.001,
+      "delta": 0.01
+    }
+  },
+  "crop_each_side": 16,
+  "motion_kernel": [
+    [
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111,
+      0.1111111111111111
+    ]
+  ],
+  "sigma_narrow": 1.4,
+  "sigma_wide": 2.4,
+  "gaussian_sigma": 1.9,
+  "noise": "same additive Gaussian realization per image across scenarios; negatives clipped to 0",
+  "phantom_seed": 7351,
+  "summary": "clipped [0,1]; paired gains over each scenario observation"
+}
