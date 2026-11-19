@@ -1,0 +1,79 @@
+\clearpage
+\newgeometry{textwidth=6.45in,textheight=9.15in,top=1in,headheight=14pt,headsep=15pt}
+\setlength{\headwidth}{\textwidth}
+\section{Implementation source code}
+\label{app:code}
+
+The excerpts use the original line numbers of the files in the linked GitHub source code folder. Listing~\ref{lst:forward-code} in Section~\ref{sec:implementation} gives the shared forward operator. The listings below follow the simulation, solver, evaluation, and ImageJ reference workflows.
+
+\subsection{PSF construction and noise simulation}
+
+In \file{code/deconv/core.py}, both PSFs are normalized before convolution. The Gaussian observation is floored at zero, and the Poisson observation is scaled back to intensity units after sampling photon counts.
+
+\reportlisting{Python}{deconv/core.py}{33}{44}{
+  caption={Unit-sum Gaussian and horizontal motion PSFs.},
+  label={lst:psf-code}
+}
+
+\reportlisting{Python}{deconv/core.py}{65}{74}{
+  caption={Seeded observations with Gaussian or Poisson noise.},
+  label={lst:noise-code}
+}
+
+\clearpage
+\subsection{Deconvolution solvers}
+
+Listings~\ref{lst:solver-helpers}--\ref{lst:iterative-code} show the spectral and TV helpers and the complete \file{solve} function from \file{code/deconv/solvers.py}.
+
+\reportlisting{Python}{deconv/solvers.py}{11}{25}{
+  caption={Identity-penalty spectral filter and smoothed TV divergence.},
+  label={lst:solver-helpers}
+}
+
+\reportlisting{Python}{deconv/solvers.py}{27}{57}{
+  caption={Solver entry point, input checks, and FFT setup.},
+  label={lst:solver-setup}
+}
+
+\clearpage
+The direct branch uses the NIF power floor or a Tikhonov penalty. The iterative branch applies the forward and adjoint operators at each step and adds the TV denominator for RLTV.
+
+\reportlisting{Python}{deconv/solvers.py}{58}{73}{
+  caption={Direct spectral restoration for NIF, TRIF, and Laplacian RIF.},
+  label={lst:spectral-code}
+}
+
+\reportlisting{Python}{deconv/solvers.py}{75}{100}{
+  caption={Iterative restoration for RL and RLTV, including the ImageJ-matched RL rule.},
+  label={lst:iterative-code}
+}
+
+\clearpage
+\subsection{Parameter selection and test evaluation}
+
+In \file{code/scripts/run_experiments.py}, the validation loop selects the highest mean clipped PSNR for each method and noise model. The script saves the frozen configuration before the test loop scores the held-out images under both policies.
+
+\reportlisting{Python}{scripts/run_experiments.py}{75}{97}{
+  caption={Validation-only parameter selection and the Poisson RL diagnostic.},
+  label={lst:validation-code}
+}
+
+\reportlisting{Python}{scripts/run_experiments.py}{121}{137}{
+  caption={Freezing parameters and evaluating the held-out BSDS500 test images.},
+  label={lst:test-code}
+}
+
+\clearpage
+\subsection{Metrics and ImageJ reference}
+
+In \file{code/deconv/metrics.py}, MSE and fixed-peak PSNR use every pixel. The SSIM mean uses the centers of valid \(11\times11\) Gaussian windows. The Java launcher in \file{code/imagej/BatchReference.java} reloads the float TIFF and calls its independent scoring routine after each plugin run.
+
+\reportlisting{Python}{deconv/metrics.py}{6}{18}{
+  caption={Python implementation of MSE, PSNR, and local SSIM.},
+  label={lst:metrics-code}
+}
+
+\reportlisting{Java}{imagej/BatchReference.java}{103}{124}{
+  caption={DeconvolutionLab2 invocation, float TIFF decoding, and independent scoring handoff.},
+  label={lst:imagej-code}
+}

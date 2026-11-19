@@ -2,7 +2,7 @@
 
 Digital Image Processing course project, class E23TTNT02, Posts and Telecommunications Institute of Technology. The project implements five non-blind 2D solvers in Python and checks them against DeconvolutionLab2 2.1.2 running in ImageJ 1.54p.
 
-- [English report PDF](report/bao-cao.pdf) and [standalone LaTeX sources](report/bao-cao-latex.zip)
+- [Group 07 course report](<report/NHÓM 07 - BÁO CÁO BÀI TẬP LỚN.pdf>) and [standalone LaTeX sources](report/bao-cao-latex.zip)
 - [Reproduction instructions](code/README.md) and [report build instructions](report/README.md)
 - [Experiment evidence](evidence/README.md), [Python test metrics](evidence/test_metrics.csv), and [independent ImageJ metrics](evidence/imagej/imagej_metrics.csv)
 - [Technical and academic review](docs/05_ra_soat_hoc_thuat.md), with the original team drafts in [docs](docs/README.md)
@@ -28,4 +28,4 @@ BTL/
 └── outputs/          # Generated TIFFs, logs, figures, and CSVs
 ~~~
 
-Run the commands from this root. `data/` and `outputs/` are ignored by Git and can be recreated. The report source uses the one-column typography of the public ICLR 2026 sample, with an A4 PTIT course cover. The paper includes the full per-image test atlas and a complete parameter sweep. [ICLR author guide and template](https://iclr.cc/Conferences/2026/AuthorGuide)
+Run the commands from this root. `data/` and `outputs/` are ignored by Git and can be recreated. The report includes the main implementation listings, the complete parameter sweep, and the per-image test atlas.

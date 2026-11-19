@@ -3,19 +3,17 @@
 
 \subsection{Environment and data}
 
-The report uses run \texttt{\RunID}. The application environment is Python \PythonVersion, NumPy \NumPyVersion, SciPy \SciPyVersion, ImageJ 1.54p, and Java \JVMVersion. The Python dependency pins are listed in \file{code/requirements.txt}. The Java path must expose both \file{javac} and \file{java}. The original downloads are obtained from Berkeley and EPFL. SHA-256 hashes for the benchmark files and release JARs are recorded in the manifests. The checkout does not need to redistribute archives or third-party JARs.
+The report uses run \texttt{\RunID}, produced with Python \PythonVersion, NumPy \NumPyVersion, SciPy \SciPyVersion, ImageJ 1.54p, and Java \JVMVersion. Python dependencies are pinned in \file{code/requirements.txt}. The manifests record SHA-256 hashes for the Berkeley and EPFL data and the ImageJ and DeconvolutionLab2 JARs.
 
 \textbf{Validation JPEG IDs}\quad\ValidationIDs.
 
 \textbf{Test JPEG IDs}\quad\TestIDs.
 
-The manifests preserve the full archive member names, including any zero padding used in original filenames. The archived numerical summary does not depend on machine-specific absolute paths. The saved job list and runtime log refer to the paths used by the recorded execution, while a new batch constructs jobs relative to the current project root.
-
 \subsection{Commands}
 
-Run Listing~\ref{lst:commands} from the project root. Each fresh BSDS500 experiment creates a time-stamped output directory. Subsequent commands obtain the latest output path or accept a specific run directory. The ImageJ runtime and supplementary experiments each create their own directories. For a new full result, use a fresh primary run so all audits share the same frozen configuration.
+Run Listing~\ref{lst:commands} from the project root with \file{java} and \file{javac} on the path. The follow-up experiments read the latest BSDS500 run and reuse its frozen parameters.
 
-\begin{lstlisting}[style=paper,caption={End-to-end experiment and report-data generation from the BTL root.},
+\begin{lstlisting}[style=paper,language=bash,caption={Commands for the experiments and numerical checks.},
 label={lst:commands}]
 python code/scripts/prepare_data.py
 python code/scripts/check.py
@@ -24,16 +22,13 @@ python code/scripts/audit_artifacts.py
 python code/scripts/run_imagej.py
 python code/scripts/run_sensitivity.py
 python code/scripts/run_epfl_bars.py
-python code/scripts/build_report.py
 \end{lstlisting}
 
-From \file{report}, run pdfLaTeX on \file{bao-cao.tex} twice or use \file{latexmk}. The LaTeX source archive includes figures, input tables, and the adapted course paper style. Its typography follows the public ICLR 2026 author example \url{https://github.com/ICLR/Master-Template/tree/master/iclr2026}.
-
+\clearpage
 \subsection{Expected artifacts and audit counts}
 
-\begin{table}[!htbp]
-\centering
-\caption{Checklist of numerical evidence. The paths are relative to a completed run directory.}
+\begin{center}
+\captionof{table}{Checklist of numerical evidence. The paths are relative to a completed run directory.}
 \small
 \begin{tabularx}{\linewidth}{@{}p{.44\linewidth}Y@{}}
 \toprule Artifact & Expected content\\\midrule
@@ -51,9 +46,9 @@ From \file{report}, run pdfLaTeX on \file{bao-cao.tex} twice or use \file{latexm
 \file{benchmark.csv} & Five timing ratios, raw repetitions, and maximum numeric differences.\\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{center}
 
-The individual output folders retain the reference, observed image, noise-free blur, PSF, and raw estimates as float TIFF. Publication figures use common ranges and fixed ROIs. Observation and output provenance are held together by image and noise identifier. The report data-generation script requires both main and external ImageJ audits to pass before collecting scores.
+Each image and noise case retains its reference, observation, noise-free blur, PSF, and raw estimates as float TIFF. The audits recompute scores from the saved pixels.
 
 \subsection{Team responsibilities}
 
@@ -61,7 +56,7 @@ The individual output folders retain the reference, observed image, noise-free b
 \toprule Student & Technical focus\\\midrule
 Nguyen Minh Hieu & Forward model, boundary assumptions, Fourier derivation, and worked examples.\\
 Pham Manh Dung & Python solvers, optimization, and unit testing.\\
-Nguyen Thanh Tam & DeconvolutionLab2 inspection, plugin workflow, and Java batch verification.\\
+Nguyen Thanh Tam & DeconvolutionLab2 inspection, ImageJ workflow, macros, and Python CLI handoff for reference runs.\\
 Vu Dinh Hieu & Data preparation, evaluation protocol, metric aggregation, and sensitivity experiments.\\
 \bottomrule
 \end{tabularx}

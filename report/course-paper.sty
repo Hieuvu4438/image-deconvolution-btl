@@ -1,7 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{course-paper}[2026/11/18 Single-column course paper]
-% The public ICLR 2026 sample uses article, Times, small caps and a
-% 5.5-inch measure. The course report retains A4 and an institutional cover.
 \RequirePackage[T1]{fontenc}
 \RequirePackage{times}
 \RequirePackage{amsmath,amssymb,mathtools}
@@ -34,14 +32,34 @@
 \titlespacing*{\subsection}{0pt}{1.65ex plus .2ex minus .15ex}{.62ex}
 \titlespacing*{\subsubsection}{0pt}{1.4ex plus .2ex minus .1ex}{.4ex}
 \captionsetup{font=small,labelfont=bf,format=hang,hypcap=false}
-\definecolor{listingbg}{gray}{.965}
-\definecolor{listingrule}{gray}{.77}
+\definecolor{listingbg}{HTML}{F4F7FB}
+\definecolor{listingrule}{HTML}{A2B2C4}
+\definecolor{listingtext}{HTML}{172338}
+\definecolor{listingnumber}{HTML}{52657A}
+\definecolor{listingkeyword}{HTML}{174C87}
+\definecolor{listingstring}{HTML}{8C3A22}
+\definecolor{listingcomment}{HTML}{376248}
 \lstdefinestyle{paper}{
-  basicstyle=\ttfamily\small,frame=single,framesep=6pt,framerule=.4pt,
+  basicstyle=\fontfamily{lmtt}\linespread{1}\fontsize{9}{10.5}\selectfont\color{listingtext},
+  frame=tb,framesep=6pt,framerule=.5pt,framexleftmargin=5pt,framexrightmargin=5pt,
   rulecolor=\color{listingrule},backgroundcolor=\color{listingbg},
-  commentstyle=\itshape,numbers=left,numberstyle=\tiny,numbersep=9pt,xleftmargin=1.9em,
-  captionpos=t,columns=fullflexible,keepspaces=true,showstringspaces=false,
-  breaklines=true,aboveskip=.7em,belowskip=.65em,tabsize=4
+  keywordstyle=\bfseries\color{listingkeyword},stringstyle=\color{listingstring},
+  commentstyle=\itshape\color{listingcomment},
+  numbers=left,numberstyle=\fontfamily{lmtt}\scriptsize\selectfont\color{listingnumber},
+  numbersep=11pt,xleftmargin=24pt,xrightmargin=6pt,
+  captionpos=t,columns=fullflexible,keepspaces=true,upquote=true,showstringspaces=false,
+  breaklines=true,breakatwhitespace=false,breakautoindent=false,breakindent=1.5em,
+  postbreak=\mbox{\textcolor{listingnumber}{\ensuremath{\hookrightarrow}}\space},
+  aboveskip=.5em,belowskip=.45em,tabsize=4
+}
+% The standalone source ZIP stores the referenced source files under code/.
+\IfFileExists{code/deconv/solvers.py}
+  {\newcommand{\codesources}{code}}
+  {\newcommand{\codesources}{../code}}
+\newcommand{\reportlisting}[5]{%
+  \par\noindent\begin{minipage}[t]{\linewidth}
+  \lstinputlisting[style=paper,language=#1,firstline=#3,lastline=#4,firstnumber=#3,#5]{\codesources/#2}%
+  \end{minipage}\par
 }
 \pagestyle{fancy}
 \fancyhf{}

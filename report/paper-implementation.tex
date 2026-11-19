@@ -21,49 +21,22 @@ The entry point \file{solve} accepts a finite 2D observation, a centered unit-su
 \end{tabularx}
 \end{table}
 
-The propagation operators share the same OTF. Each iterative update applies one blur and one back-projection, with a conjugate OTF for the latter. The Laplacian spectrum is computed directly from the row and column frequencies. This avoids allocating a stencil whose support is larger than a one-row or one-column signal and keeps the mathematical definition consistent for those degenerate shapes.
+Listing~\ref{lst:forward-code} shows how the forward operator places the PSF origin at index \((0,0)\) before computing the OTF. The inverse \file{irfft2} receives the original image shape so it also reconstructs an odd last dimension correctly. The solver uses the same OTF for blurring and its complex conjugate for back-projection. Listing~\ref{lst:spectral-code} computes the Laplacian spectrum directly from the row and column frequencies, including for one-row and one-column inputs.
 
-\begin{lstlisting}[style=paper,language=Python,
-caption={Core transform and adjoint operations in the iterative Python solver.},label={lst:transforms}]
-psf_grid = validate_psf(psf, image_shape)
-forward_fft = fft.rfft2 if optimized else fft.fft2
-otf = forward_fft(psf_grid)
-adjoint_otf = otf.conj()
-
-# Inside the iteration, estimate is the current image.
-prediction = inverse_fft(forward_fft(estimate) * otf)
-# ratio is formed from observation and prediction.
-correction = inverse_fft(forward_fft(ratio) * adjoint_otf)
-\end{lstlisting}
-
-Listing~\ref{lst:transforms} shows the shared transforms, omitting method-specific guards. The optimized inverse specifies the original shape in \file{irfft2}; otherwise an odd last dimension can be reconstructed with the wrong length. Real-to-complex FFTs store only nonredundant columns. Both the explicit full FFT and the real FFT apply the same periodic operator. The baseline recomputes the OTF inside each iterative step, while the optimized form caches it. These two improvements are measured together. Neither method translates the reconstructed estimate after the fact.
+\reportlisting{Python}{deconv/core.py}{46}{63}{
+  caption={PSF centering, validation, and circular convolution in \texttt{core.py}.},
+  label={lst:forward-code}
+}
 
 \subsection{Iterative update and stability checks}
 
-The regular branch clamps tiny negative FFT predictions and uses \(\varepsilon=10^{-12}\). The correction remains nonnegative up to roundoff, which is guarded too. The auxiliary matching branch uses the plugin's zero-ratio threshold and its observation initialization. It is used only for plain RL. In RLTV, the denominator is checked before division to avoid hiding a mathematically invalid update behind clipping.
-
-\begin{lstlisting}[style=paper,caption={Pseudocode for the shared RL and RLTV update in the main Python configuration.},
-label={lst:rl}]
-estimate = constant_image(mean(observation))
-repeat K times:
-    prediction = max(blur(estimate), 0)
-    ratio = observation / (prediction + epsilon)
-    correction = max(adjoint_blur(ratio), 0)
-    updated = estimate * correction
-    if TV weight is positive:
-        denominator = 1 - lambda * div(normalized_gradient)
-        require every denominator to be positive
-        updated = updated / denominator
-    require all pixels of updated to be finite
-    estimate = updated
-return estimate
-\end{lstlisting}
+Listing~\ref{lst:iterative-code} shows the RL and RLTV loop. The main branch clamps negative roundoff in the prediction and correction and uses \(\varepsilon=10^{-12}\). The plain RL matching branch uses the plugin's observation initialization and zero-ratio threshold. RLTV checks the denominator before division and verifies that every updated value is finite. Appendix~\ref{app:code} includes the full \file{solve} implementation and the experiment and scoring excerpts.
 
 For \(Q=MN\), the direct methods take \(O(Q\log Q)\) time and \(O(Q)\) working memory. RL and RLTV take \(O(KQ\log Q)\) time, with \(O(Q)\) extra work per iteration for the TV terms. The constant can be substantial because the prediction and correction each require a forward and inverse transform. Reusing the PSF spectrum reduces unnecessary FFT calls without changing the iteration count. The code distinguishes the Python float64 arithmetic from the float32 handoff to ImageJ.
 
 \subsection{ImageJ reference workflow}
 
-DeconvolutionLab2 offers image and PSF input, algorithm selection, control parameters, FFT backends, and output export \citep{sage,dl2docs}. The GUI route installs the v2.1.2 release JAR under \file{plugins} and opens \emph{Plugins / DeconvolutionLab2 / DeconvolutionLab2 Lab}. Select \file{observed.tif} and the full-size centered \file{psf_centered.tif}. Select the method and its frozen parameters, use Academic FFT, disable padding, apodization and constraints, and export a float stack with intact intensities. The evaluated route invokes the same \file{DeconvolutionLab2_Run} plugin entry point from a Java batch launcher on ImageJ 1.54p.
+The Java batch launcher invokes \file{DeconvolutionLab2_Run} from DeconvolutionLab2 2.1.2 on ImageJ 1.54p \citep{sage,dl2docs}. Listing~\ref{lst:imagej-code} shows the plugin invocation and scoring handoff. Appendix~\ref{app:imagej} gives the corresponding settings for replay in the GUI.
 
 The launcher sets macro options rather than typing into a GUI. It reads exported TIFFs through ImageJ, checks their bit depth and dimensions, and independently computes the metrics. The reference runtime is Java \JVMVersion. The batch records the command for every case, the JAR URLs and SHA-256 hashes, and the algorithm outputs as float TIFF. It also calls the plugin's \file{Assessment.psnr} for an additional native-score check. The JAR and the Python source may use different single-precision normalization and discrete derivative rules, so the settings and source comparison are part of the evidence \citep{dl2code}.
 

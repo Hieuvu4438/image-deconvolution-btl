@@ -1,5 +1,16 @@
 # Chạy lại thực nghiệm Deconvolution
 
+Thư mục này chứa mã minh chứng cho [báo cáo Nhóm 07](<../report/NHÓM 07 - BÁO CÁO BÀI TẬP LỚN.pdf>). Các listing trong Mục 4 và Phụ lục G trích trực tiếp từ các tệp dưới đây.
+
+| Thành phần | Vai trò |
+|---|---|
+| [deconv/core.py](deconv/core.py) | Tạo PSF, tích chập tuần hoàn và mô phỏng nhiễu. |
+| [deconv/solvers.py](deconv/solvers.py) | Cài đặt NIF, TRIF, RIF, RL và RLTV. |
+| [deconv/metrics.py](deconv/metrics.py) | Tính MSE, PSNR và SSIM. |
+| [scripts/](scripts/) | Chuẩn bị BSDS500, chọn tham số, chạy thực nghiệm, benchmark và kiểm chứng kết quả. |
+| [imagej/BatchReference.java](imagej/BatchReference.java) | Chạy DeconvolutionLab2 qua ImageJ và chấm điểm độc lập từ TIFF. |
+| [tests/test_deconv.py](tests/test_deconv.py) | Kiểm thử thuật toán bằng ví dụ tính tay và đối chiếu số học độc lập. |
+
 Chạy từ thư mục gốc `BTL`. Môi trường đã kiểm chứng là Python 3.13.5, Windows 11, JDK 25.0.1, ImageJ 1.54p và DeconvolutionLab2 2.1.2. Dùng môi trường Python sẵn có với các gói trong [requirements.txt](requirements.txt). Lần đầu cần `curl` và mạng để lấy archive Berkeley cùng hai JAR chính thức. Script kiểm tra SHA-256 của JAR và ghi hash của dataset, từng ảnh JPEG.
 
 ```powershell
